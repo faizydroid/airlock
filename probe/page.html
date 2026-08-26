@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>webmcp-probe</title></head>
+<body>
+<pre id="out">running</pre>
+<script>
+const R = { done: false };
+window.__R = R;
+
+function safe(name, fn) {
+  return Promise.resolve().then(fn).then(v => { R[name] = { ok: true, v }; },
+                                         e => { R[name] = { ok: false, err: String(e && e.name), msg: String(e && e.message) }; });
+}
+
+(async () => {
+  R.ua = navigator.userAgent;
+  R.chromeVersion = (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [])[1] || null;
+  R.isSecureContext = window.isSecureContext;
+  R.originAgentCluster = window.originAgentCluster;
+  R.origin = location.origin;
+  R.has_document_modelContext = 'modelContext' in document;
+  R.has_navigator_modelContext = 'modelContext' in navigator;
+  R.has_window_agent = 'agent' in window;
+  R.documentPolicyToolsAllowed = (document.featurePolicy && typeof document.featurePolicy.allowsFeature === 'function')
+      ? (() => { try { return document.featurePolicy.allowsFeature('tools'); } catch (e) { return 'throw:' + e; } })() : 'no-featurePolicy-api';
+  R.featurePolicyFeaturesHasTools = (document.featurePolicy && document.featurePolicy.features)
+      ? document.featurePolicy.features().includes('tools') : null;
+
+  if (!document.modelContext) { R.done = true; document.getElementById('out').textContent = 'no-modelContext'; return; }
+
+  const mc = document.modelContext;
+  R.modelContextCtor = Object.getPrototypeOf(mc).constructor.name;
+  R.modelContextMembers = Object.getOwnPropertyNames(Object.getPrototypeOf(mc)).sort();
+  R.navigatorModelContextMembers = navigator.modelContext
+      ? Object.getOwnPropertyNames(Object.getPrototypeOf(navigator.modelContext)).sort() : null;
+
+  // toolchange event capture
+  R.toolchangeFired = 0;
+  mc.addEventListener('toolchange', () => { R.toolchangeFired++; });
+  R.hasOntoolchange = 'ontoolchange' in mc;
+
+  // 1. basic registration
+  await safe('register_basic', () => mc.registerTool({
+    name: 'probe_basic',
+    description: 'basic probe tool',
+    inputSchema: { type: 'object', properties: { a: { type: 'string' } } },
+    execute: async (input, opts) => {
+      R.execute_input = input;
+      R.execute_secondArgType = typeof opts;
+      R.execute_secondArgKeys = opts ? Object.keys(opts) : null;
+      R.execute_secondArgOwnAndProto = opts ? Object.getOwnPropertyNames(opts).concat(
+          Object.getPrototypeOf(opts) ? Object.getOwnPropertyNames(Object.getPrototypeOf(opts)) : []) : null;
+      R.execute_hasRequestUserInteraction = !!(opts && typeof opts.requestUserInteraction === 'function');
+      R.execute_signalIsAbortSignal = !!(opts && opts.signal instanceof AbortSignal);
+      R.execute_arity = 'n/a';
+      return { echoed: input };
+    }
+  }));
+
+  // 2. annotations: known + speculative
+  await safe('register_annotations', () => mc.registerTool({
+    name: 'probe_annotations',
+    description: 'annotation probe',
+    annotations: {
+      readOnlyHint: true,
+      untrustedContentHint: true,
+      destructiveHint: true,
+      idempotentHint: true,
+      openWorldHint: true
+    },
+    execute: () => 'ok'
+  }));
+
+  // 3. outputSchema
+  await safe('register_outputSchema', () => mc.registerTool({
+    name: 'probe_outputschema',
+    description: 'output schema probe',
+    inputSchema: { type: 'object', properties: {} },
+    outputSchema: { type: 'object', properties: { r: { type: 'string' } } },
+    execute: () => ({ r: 'x' })
+  }));
+
+  // 4. title member
+  await safe('register_title', () => mc.registerTool({
+    name: 'probe_title',
+    title: 'Probe Title',
+    description: 'title probe',
+    execute: () => 'ok'
+  }));
+
+  // 5. name validation
+  await safe('register_name_with_space', () => mc.registerTool({
+    name: 'bad name', description: 'x', execute: () => 'ok'
+  }));
+  await safe('register_name_129', () => mc.registerTool({
+    name: 'a'.repeat(129), description: 'x', execute: () => 'ok'
+  }));
+  await safe('register_name_128', () => mc.registerTool({
+    name: 'b'.repeat(128), description: 'x', execute: () => 'ok'
+  }));
+  await safe('register_empty_description', () => mc.registerTool({
+    name: 'probe_empty_desc', description: '', execute: () => 'ok'
+  }));
+  await safe('register_duplicate', () => mc.registerTool({
+    name: 'probe_basic', description: 'dupe', execute: () => 'ok'
+  }));
+  await safe('register_no_inputSchema', () => mc.registerTool({
+    name: 'probe_noschema', description: 'no schema', execute: () => 'ok'
+  }));
+  // long description / oversized: is there a hard cap?
+  await safe('register_desc_5000', () => mc.registerTool({
+    name: 'probe_longdesc', description: 'D'.repeat(5000), execute: () => 'ok'
+  }));
+
+  // 6. unregisterTool / provideContext presence
+  R.has_unregisterTool = typeof mc.unregisterTool;
+  R.has_provideContext = typeof mc.provideContext;
+  R.has_getTools = typeof mc.getTools;
+  R.has_executeTool = typeof mc.executeTool;
+
+  // 7. getTools
+  await safe('getTools', async () => {
+    const tools = await mc.getTools();
+    return tools.map(t => ({ keys: Object.keys(t), name: t.name, title: t.title,
+                             annotations: t.annotations, hasOutputSchema: 'outputSchema' in t,
+                             outputSchema: t.outputSchema, origin: t.origin }));
+  });
+
+  // 8. executeTool with object arg (spec) vs string arg (Chrome docs)
+  await safe('executeTool_object', async () => {
+    const tools = await mc.getTools();
+    const t = tools.find(x => x.name === 'probe_basic');
+    const res = await mc.executeTool(t, { a: 'objectform' });
+    return { type: typeof res, res };
+  });
+  await safe('executeTool_string', async () => {
+    const tools = await mc.getTools();
+    const t = tools.find(x => x.name === 'probe_basic');
+    const res = await mc.executeTool(t, '{"a":"stringform"}');
+    return { type: typeof res, res };
+  });
+
+  // 9. thrown error surfacing
+  await safe('register_thrower', () => mc.registerTool({
+    name: 'probe_throw', description: 'throws', execute: () => { throw new Error('boom-detail-12345'); }
+  }));
+  await safe('executeTool_thrower', async () => {
+    const tools = await mc.getTools();
+    const t = tools.find(x => x.name === 'probe_throw');
+    try { return { resolved: await mc.executeTool(t, {}) }; }
+    catch (e) { return { rejectedWith: e && e.name, message: e && e.message, isDOMException: e instanceof DOMException }; }
+  });
+
+  // 10. abort-based unregistration
+  await safe('abort_unregister', async () => {
+    const ac = new AbortController();
+    await mc.registerTool({ name: 'probe_abortable', description: 'abortable', execute: () => 'ok' }, { signal: ac.signal });
+    const before = (await mc.getTools()).some(t => t.name === 'probe_abortable');
+    ac.abort();
+    await new Promise(r => setTimeout(r, 50));
+    const after = (await mc.getTools()).some(t => t.name === 'probe_abortable');
+    return { before, after };
+  });
+
+  // 11. exposedTo with insecure origin
+  await safe('exposedTo_insecure', () => mc.registerTool({
+    name: 'probe_exposed', description: 'exposed', execute: () => 'ok'
+  }, { exposedTo: ['http://insecure.example'] }));
+
+  // 12. events named on ModelContext
+  R.eventHandlerProps = ['ontoolchange','ontoolactivated','ontoolcanceled','ontoolcall']
+      .reduce((acc, k) => (acc[k] = (k in mc), acc), {});
+
+  await new Promise(r => setTimeout(r, 100));
+  R.toolchangeFiredFinal = R.toolchangeFired;
+  R.done = true;
+  document.getElementById('out').textContent = 'done';
+})();
+</script>
+</body>
+</html>

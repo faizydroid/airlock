@@ -1,0 +1,15 @@
+node_modules/
+site/
+dist/
+
+# Origin trial tokens are per-origin secrets-ish: not dangerous if leaked, but they
+# should not be committed, and they change per deploy target.
+origin-trial-token.txt
+
+.wrangler/
+.DS_Store
+
+# Test and diagnostic artifacts
+vitest-report.json
+test-out.txt
+tsc-out.txt

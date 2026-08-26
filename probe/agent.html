@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebMCP agent-facing probe</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin:0; padding:16px; background:#0d1117; color:#e6edf3;
+         font:13px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; }
+  h1 { font-size:15px; margin:0 0 4px; }
+  h2 { font-size:13px; margin:18px 0 6px; color:#7d8590; text-transform:uppercase; letter-spacing:.06em; }
+  .sub { color:#7d8590; margin:0 0 16px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(330px,1fr)); gap:16px; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:6px; padding:12px; }
+  pre { margin:0; white-space:pre-wrap; word-break:break-word; }
+  .ok { color:#3fb950; } .bad { color:#f85149; } .warn { color:#d29922; } .dim { color:#7d8590; }
+  button { background:#21262d; color:#e6edf3; border:1px solid #30363d; border-radius:5px;
+           padding:6px 10px; font:inherit; cursor:pointer; margin:0 6px 6px 0; }
+  button:hover { background:#30363d; }
+  #log { max-height:340px; overflow:auto; }
+  .row { border-bottom:1px solid #21262d; padding:5px 0; }
+  .canary { color:#58a6ff; }
+  #offscreen { margin-top:150vh; }
+  table { border-collapse:collapse; width:100%; }
+  td { padding:2px 8px 2px 0; vertical-align:top; }
+  td:first-child { color:#7d8590; white-space:nowrap; }
+</style>
+</head>
+<body>
+
+<h1>WebMCP agent-facing probe</h1>
+<p class="sub">Answers "does the agent discover and call these tools, and what can it see?" &mdash;
+which <code>page.html</code> does not test. Everything renders on-page; no console required.</p>
+
+<div class="grid">
+
+  <div class="card">
+    <h2>Environment</h2>
+    <table id="env"></table>
+  </div>
+
+  <div class="card">
+    <h2>Registered tools <span class="dim">(via getTools)</span></h2>
+    <pre id="tools" class="dim">…</pre>
+    <div style="margin-top:10px">
+      <button id="btnRegister">Register probe_extra</button>
+      <button id="btnAbort">Abort probe_extra</button>
+      <button id="btnRefresh">Refresh list</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Canaries <span class="dim">(ask the agent which it can see)</span></h2>
+    <table>
+      <tr><td>DOM text</td><td class="canary" id="cDom"></td></tr>
+      <tr><td>SVG text</td><td><svg width="230" height="18"><text x="0" y="13" fill="#58a6ff"
+        font-family="monospace" font-size="12" id="cSvg"></text></svg></td></tr>
+      <tr><td>Canvas</td><td><canvas id="cCanvas" width="230" height="18"></canvas></td></tr>
+      <tr><td>aria-hidden</td><td><span aria-hidden="true" class="canary" id="cAria"></span></td></tr>
+      <tr><td>title attr</td><td><span class="dim" id="cTitleHost" title="">hover target</span></td></tr>
+      <tr><td>memory only</td><td class="dim">never rendered &mdash; control</td></tr>
+    </table>
+  </div>
+
+  <div class="card">
+    <h2>Pending approval queue</h2>
+    <pre id="pending" class="dim">none</pre>
+  </div>
+
+</div>
+
+<h2>Invocation log</h2>
+<div class="card"><div id="log" class="dim">waiting for tool calls…</div></div>
+
+<div id="offscreen">
+  <div class="card">
+    <h2>Below the fold</h2>
+    <p>Offscreen canary: <span class="canary" id="cOff"></span></p>
+  </div>
+</div>
+
+<script>
+/* ------------------------------------------------------------------ *
+ * Canary tokens. Distinct per render channel so a leak names itself. *
+ * ------------------------------------------------------------------ */
+const CANARY = {
+  dom:      'CANARY-DOM-7f3a9c',
+  svg:      'CANARY-SVG-4d8f11',
+  canvas:   'CANARY-CANVAS-b21e40',
+  aria:     'CANARY-ARIA-1c6d05',
+  titleAttr:'CANARY-TITLE-9a2e63',
+  offscreen:'CANARY-OFFSCREEN-e93b72',
+  memory:   'CANARY-MEMORY-a70f28'   // never rendered, never returned. Control.
+};
+
+document.getElementById('cDom').textContent = CANARY.dom;
+document.getElementById('cSvg').textContent = CANARY.svg;
+document.getElementById('cAria').textContent = CANARY.aria;
+document.getElementById('cOff').textContent = CANARY.offscreen;
+document.getElementById('cTitleHost').title = CANARY.titleAttr;
+(() => {
+  const ctx = document.getElementById('cCanvas').getContext('2d');
+  ctx.fillStyle = '#58a6ff';
+  ctx.font = '12px monospace';
+  ctx.fillText(CANARY.canvas, 0, 13);
+})();
+
+/* ---------------- on-page logging (no console needed) ------------- */
+const logEl = document.getElementById('log');
+let logCount = 0;
+function log(label, detail, cls) {
+  if (logCount++ === 0) logEl.textContent = '';
+  const row = document.createElement('div');
+  row.className = 'row';
+  const t = new Date().toISOString().slice(11, 23);
+  row.innerHTML = '<span class="dim">' + t + '</span> <span class="' + (cls || '') + '">'
+    + label + '</span>' + (detail === undefined ? ''
+    : '\n<pre class="dim">' + JSON.stringify(detail, null, 2) + '</pre>');
+  logEl.prepend(row);
+}
+
+/* ---------------------- environment readout ----------------------- */
+const mc = document.modelContext;
+const envRows = [
+  ['document.modelContext', mc ? 'present' : 'ABSENT', mc ? 'ok' : 'bad'],
+  ['navigator.modelContext', ('modelContext' in navigator) ? 'present (stale API)' : 'absent',
+    ('modelContext' in navigator) ? 'warn' : 'dim'],
+  ['registerTool', mc && typeof mc.registerTool === 'function' ? 'function' : 'MISSING',
+    mc && typeof mc.registerTool === 'function' ? 'ok' : 'bad'],
+  ['getTools / executeTool', mc ? (typeof mc.getTools) + ' / ' + (typeof mc.executeTool) : 'n/a', 'dim'],
+  ['secureContext', String(window.isSecureContext), window.isSecureContext ? 'ok' : 'bad'],
+  ['originAgentCluster', String(window.originAgentCluster),
+    window.originAgentCluster ? 'ok' : 'bad'],
+  ['origin', location.origin, 'dim'],
+  ['chrome', (navigator.userAgent.match(/Chrome\/([\d.]+)/) || [, 'n/a'])[1], 'dim'],
+  ['toolchange events seen', '0', 'dim']
+];
+const envEl = document.getElementById('env');
+function renderEnv() {
+  envEl.innerHTML = envRows.map(r =>
+    '<tr><td>' + r[0] + '</td><td class="' + (r[2] || '') + '">' + r[1] + '</td></tr>').join('');
+}
+renderEnv();
+
+/* --------------------------- tool list ---------------------------- */
+async function refreshTools() {
+  const el = document.getElementById('tools');
+  if (!mc || typeof mc.getTools !== 'function') { el.textContent = 'getTools unavailable'; return; }
+  try {
+    const tools = await mc.getTools();
+    el.textContent = tools.length
+      ? tools.map(t => '• ' + t.name).join('\n')
+      : '(none registered)';
+  } catch (e) { el.textContent = 'getTools threw: ' + e.name; }
+}
+
+if (mc) {
+  let tc = 0;
+  mc.addEventListener('toolchange', () => {
+    envRows[8][1] = String(++tc); renderEnv(); refreshTools();
+    log('toolchange fired', undefined, 'warn');
+  });
+}
+
+/* ----------------------- two-phase approval ----------------------- */
+const pendingEl = document.getElementById('pending');
+const requests = new Map();
+let reqSeq = 0;
+
+function renderPending() {
+  const open = [...requests.values()].filter(r => r.status === 'pending');
+  if (!open.length) { pendingEl.textContent = 'none'; pendingEl.className = 'dim'; return; }
+  pendingEl.className = '';
+  pendingEl.innerHTML = '';
+  for (const r of open) {
+    const d = document.createElement('div');
+    d.innerHTML = '<div><b>' + r.id + '</b> &mdash; ' + r.reason + '</div>';
+    const ok = document.createElement('button');
+    ok.textContent = 'Approve';
+    ok.onclick = () => { r.status = 'approved'; log('human approved ' + r.id, undefined, 'ok'); renderPending(); };
+    const no = document.createElement('button');
+    no.textContent = 'Deny';
+    no.onclick = () => { r.status = 'denied'; log('human denied ' + r.id, undefined, 'bad'); renderPending(); };
+    d.append(ok, no);
+    pendingEl.append(d);
+  }
+}
+
+/* ------------------------------ tools ----------------------------- */
+const SIZES = { small: 1000, budget: 1400, over: 3000, huge: 8000 };
+
+async function registerProbeTools() {
+  if (!mc) { log('cannot register: no document.modelContext', undefined, 'bad'); return; }
+
+  // 1. echo — proves structured args survive the agent round trip
+  await mc.registerTool({
+    name: 'probe_echo',
+    description: 'Echoes back the arguments it received. Use to verify argument fidelity.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text: { type: 'string', description: 'Any string.' },
+        count: { type: 'number', description: 'Any number.' },
+        choice: { type: 'string', enum: ['alpha', 'beta', 'gamma'],
+                  description: 'Must be one of the three listed values.' }
+      },
+      required: ['text']
+    },
+    annotations: { readOnlyHint: true },
+    execute: async (input, opts) => {
+      log('probe_echo called', {
+        input,
+        secondArgKeys: opts ? Object.keys(opts) : null,
+        signalIsAbortSignal: !!(opts && opts.signal instanceof AbortSignal),
+        hasRequestUserInteraction: !!(opts && typeof opts.requestUserInteraction === 'function')
+      }, 'ok');
+      return { received: input };
+    }
+  });
+
+  // 2. sized output — finds the real output ceiling
+  await mc.registerTool({
+    name: 'probe_sized_output',
+    description: 'Returns a payload of a chosen size. Ask the agent to repeat it verbatim '
+               + 'to find where truncation begins.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        size: { type: 'string', enum: Object.keys(SIZES),
+                description: 'small=1KB, budget=1.4KB, over=3KB, huge=8KB.' }
+      },
+      required: ['size']
+    },
+    annotations: { readOnlyHint: true },
+    execute: async ({ size }) => {
+      const n = SIZES[size] || SIZES.small;
+      log('probe_sized_output called', { size, bytes: n }, 'ok');
+      // Marked payload so truncation point is identifiable.
+      let s = '';
+      for (let i = 0; s.length < n; i++) s += ('[' + i + ']').padEnd(10, '.');
+      return { bytes: n, head: 'HEAD-MARKER', payload: s.slice(0, n), tail: 'TAIL-MARKER' };
+    }
+  });
+
+  // 3. refusal returned as a VALUE, never thrown.
+  //    Thrown errors are discarded by the platform: the caller gets a generic
+  //    UnknownError and the message is lost. Our design depends on the agent
+  //    learning WHY it was refused, so refusals must be return values.
+  await mc.registerTool({
+    name: 'probe_refuse',
+    description: 'Always declines, returning a structured refusal with a reason. '
+               + 'Use to check whether the reason reaches the user.',
+    inputSchema: { type: 'object', properties: {} },
+    annotations: { readOnlyHint: true },
+    execute: async () => {
+      log('probe_refuse called', undefined, 'warn');
+      return {
+        status: 'refused',
+        reason: 'REFUSAL-REASON-3d7b21: declined by policy for probe purposes.',
+        recovery: 'This tool always refuses. Nothing to retry.'
+      };
+    }
+  });
+
+  // 4. thrower — contrast case. Expect the message to vanish.
+  await mc.registerTool({
+    name: 'probe_throw',
+    description: 'Throws an error containing a marker string. Use to confirm that thrown '
+               + 'messages are discarded by the platform.',
+    inputSchema: { type: 'object', properties: {} },
+    execute: async () => {
+      log('probe_throw called', undefined, 'warn');
+      throw new Error('THROWN-DETAIL-8c4f90');
+    }
+  });
+
+  // 5+6. two-phase pending / poll
+  await mc.registerTool({
+    name: 'probe_request_approval',
+    description: 'Files a request that a human must approve in the page. Returns immediately '
+               + 'with a request_id and does not block. Poll probe_check_approval with that id.',
+    inputSchema: {
+      type: 'object',
+      properties: { reason: { type: 'string', description: 'Why approval is being sought.' } },
+      required: ['reason']
+    },
+    execute: async ({ reason }) => {
+      const id = 'req_' + (++reqSeq);
+      requests.set(id, { id, reason, status: 'pending' });
+      renderPending();
+      log('probe_request_approval called', { id, reason }, 'warn');
+      return {
+        status: 'pending_human_approval',
+        request_id: id,
+        next_step: 'Call probe_check_approval with request_id "' + id
+                 + '" after the user responds in the page.'
+      };
+    }
+  });
+
+  await mc.registerTool({
+    name: 'probe_check_approval',
+    description: 'Reports whether a human has approved or denied a pending request.',
+    inputSchema: {
+      type: 'object',
+      properties: { request_id: { type: 'string', description: 'Id from probe_request_approval.' } },
+      required: ['request_id']
+    },
+    annotations: { readOnlyHint: true },
+    execute: async ({ request_id }) => {
+      const r = requests.get(request_id);
+      log('probe_check_approval called', { request_id, status: r ? r.status : 'unknown' }, 'ok');
+      if (!r) return { status: 'unknown_request', reason: 'No request with that id.' };
+      return { status: r.status };
+    }
+  });
+
+  log('registered 6 probe tools', undefined, 'ok');
+  refreshTools();
+}
+
+/* -------------------- dynamic registration test ------------------- */
+let extraController = null;
+document.getElementById('btnRegister').onclick = async () => {
+  if (extraController) { log('probe_extra already registered', undefined, 'warn'); return; }
+  extraController = new AbortController();
+  try {
+    await mc.registerTool({
+      name: 'probe_extra',
+      description: 'Registered on demand. Ask the agent to list tools before and after.',
+      inputSchema: { type: 'object', properties: {} },
+      annotations: { readOnlyHint: true },
+      execute: async () => ({ ok: true, note: 'probe_extra is live' })
+    }, { signal: extraController.signal });
+    log('registered probe_extra', undefined, 'ok');
+  } catch (e) { extraController = null; log('register probe_extra failed: ' + e.name, undefined, 'bad'); }
+};
+document.getElementById('btnAbort').onclick = () => {
+  if (!extraController) { log('probe_extra not registered', undefined, 'warn'); return; }
+  extraController.abort();
+  extraController = null;
+  log('aborted probe_extra', undefined, 'ok');
+  refreshTools();
+};
+document.getElementById('btnRefresh').onclick = refreshTools;
+
+registerProbeTools().catch(e => log('registration failed: ' + e.name + ' ' + e.message, undefined, 'bad'));
+</script>
+</body>
+</html>

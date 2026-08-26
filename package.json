@@ -1,0 +1,36 @@
+{
+  "name": "airlock",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "A browser tab where your agent analyses a file it never sees.",
+  "license": "MIT",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "probe": "node probe/server.mjs",
+    "build:probe": "node scripts/build-probe.mjs",
+    "verify:egress": "node scripts/verify-no-egress.mjs",
+    "verify:live": "node scripts/verify-live.mjs",
+    "deploy": "vite build && node scripts/verify-no-egress.mjs && node scripts/inject-token.mjs && wrangler pages deploy dist --project-name airlock --commit-dirty=true",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "verify": "npm run typecheck && npm run test"
+  },
+  "dependencies": {
+    "react": "19.0.0",
+    "react-dom": "19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.13.1",
+    "@types/react": "19.0.8",
+    "@types/react-dom": "19.0.3",
+    "@vitejs/plugin-react": "4.3.4",
+    "typescript": "5.7.3",
+    "vite": "6.0.11",
+    "vitest": "3.2.7",
+    "wrangler": "4.126.0"
+  }
+}
