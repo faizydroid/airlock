@@ -228,7 +228,7 @@ export function App() {
           </section>
 
           {pending.length > 0 && (
-            <section className="panel">
+            <section className="panel decide">
               <h2>
                 Your decision required
                 <span className="tag">{pending.length} pending</span>
@@ -241,7 +241,7 @@ export function App() {
             </section>
           )}
 
-          <section className="panel">
+          <section className="panel record">
             <h2>
               Disclosure ledger
               <span className="tag">append-only</span>
@@ -270,9 +270,17 @@ export function App() {
                 return (
                   <code
                     key={t.name}
-                    className={on && newlyAdded.includes(t.name) ? 'new' : ''}
-                    style={on ? undefined : { opacity: 0.35 }}
-                    title={t.description}
+                    // Unregistered tools are hatched rather than faded. Opacity is the wrong
+                    // mechanism twice over: the design system forbids it, and a 35% alpha is
+                    // invisible to assistive technology — which is why the state now also appears
+                    // in the title, where it can actually be read.
+                    className={[
+                      on ? '' : 'off',
+                      on && newlyAdded.includes(t.name) ? 'new' : ''
+                    ]
+                      .filter(Boolean)
+                      .join(' ')}
+                    title={`${on ? 'registered' : 'not yet registered'} — ${t.description}`}
                   >
                     {t.name}
                   </code>
@@ -302,7 +310,7 @@ function OverrideCard({ req }: { req: OverrideRequest }) {
         at a floor of 10 people instead of {N_NUMERIC_FLOOR}.
       </p>
       <div className="quote">{req.justification}</div>
-      <p style={{ color: '#7b8798' }}>
+      <p className="consequence">
         Approving discloses more about small cohorts. It applies to this one analysis and is
         recorded in the ledger with the reason above.
       </p>
@@ -367,13 +375,13 @@ function LedgerRow({ entry }: { entry: LedgerEntry }) {
 function CellTable({ result }: { result: NonNullable<ReturnType<typeof store.snapshot>['lastAggregate']> }) {
   const rows = result.cells.slice(0, 60);
   return (
-    <div className="body tight" style={{ maxHeight: 260, overflow: 'auto' }}>
+    <div className="body tight cell-scroll">
       <table className="cells">
         <thead>
           <tr>
             <th>cohort</th>
             <th>headcount</th>
-            <th style={{ textAlign: 'right' }}>
+            <th className="num">
               {result.stat}
               {result.metric ? ` · ${result.metric}` : ''}
             </th>
@@ -394,7 +402,7 @@ function CellTable({ result }: { result: NonNullable<ReturnType<typeof store.sna
         </tbody>
       </table>
       {result.cells.length > rows.length && (
-        <div className="provenance" style={{ padding: '7px 9px' }}>
+        <div className="provenance more">
           {result.cells.length - rows.length} further cohorts not shown here; all are in the
           exported report.
         </div>

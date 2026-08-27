@@ -71,7 +71,7 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
   const held = Object.values(results).filter((r) => r.outcome !== 'disclosed').length;
 
   return (
-    <section className="panel">
+    <section className="panel probe">
       <h2>
         Try to break it
         <span className="tag">
@@ -129,7 +129,7 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
       </div>
 
       {!loaded && (
-        <div className="attack-intro" style={{ borderTop: '1px solid var(--line)' }}>
+        <div className="attack-note">
           Load the dataset first — there is nothing to attack until there is something to protect.
         </div>
       )}

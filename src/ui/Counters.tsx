@@ -37,8 +37,11 @@ export function Counters({ state }: { state: AppState }) {
             <span>
               <b>{bytes(upload.bytes)}</b>
             </span>
+            {/* The tilde belongs inside the numeral, not beside it. At label size next to a 27px
+                figure it read as a floating minus sign, which is a bad thing to imply about a
+                token count. */}
             <span>
-              ~<b>{thousands(upload.approxTokens)}</b> tokens
+              <b>~{thousands(upload.approxTokens)}</b> tokens
             </span>
           </div>
         ) : (

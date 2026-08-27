@@ -40,6 +40,12 @@ interface ModelContextLike {
 }
 
 export function modelContext(): ModelContextLike | null {
+  // Feature detection must not assume a DOM. Without this guard the bare `document` reference
+  // throws ReferenceError under Node, and because `syncRegistration()` is deliberately
+  // fire-and-forget its async body turns that into an unhandled rejection — which surfaced as a
+  // non-zero `vitest` exit even with all 157 assertions passing. Browsers are unaffected:
+  // `document` is always defined there, so this is purely an environment check.
+  if (typeof document === 'undefined') return null;
   const mc = (document as unknown as { modelContext?: ModelContextLike }).modelContext;
   return mc && typeof mc.registerTool === 'function' ? mc : null;
 }

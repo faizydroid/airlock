@@ -180,9 +180,19 @@ if (!webmcpAvailable) {
 /* ---- tool registration and state gating ---- */
 
 const toolChips = page.locator('.tools code');
-const dimBefore = await toolChips.evaluateAll(
-  (els) => els.filter((e) => e.style.opacity === '' || e.style.opacity === '1').length
-);
+
+/**
+ * Counts the tools currently registered, by class rather than by opacity.
+ *
+ * This used to read `e.style.opacity`, which was wrong on two counts: the design system forbids
+ * opacity as a state channel (a 35% alpha is invisible to assistive technology and does not survive
+ * screenshot re-encoding), and asserting on a computed style value couples the test to a paint
+ * decision. A semantic class is the thing the application actually means.
+ */
+const registeredChipCount = () =>
+  toolChips.evaluateAll((els) => els.filter((e) => !e.classList.contains('off')).length);
+
+const dimBefore = await registeredChipCount();
 check('tool chips rendered', (await toolChips.count()) === 9, `${await toolChips.count()} chips`);
 
 if (webmcpAvailable) {
@@ -217,7 +227,10 @@ check(
   `${await attackButtons.count()} attacks`
 );
 
-await page.getByRole('button', { name: /^Run all/ }).click();
+// Case-insensitive deliberately: buttons are uppercased in CSS, and Chrome's accessible-name
+// computation reflects `text-transform`. The assertion is about which button this is, not its
+// casing.
+await page.getByRole('button', { name: /^Run all/i }).click();
 await page.waitForTimeout(2500);
 
 const verdicts = await page.locator('.attack-result .verdict').allInnerTexts();
@@ -237,8 +250,9 @@ check(
   (await page.locator('.attack-result .attack-test').count()) >= 7
 );
 check(
+  // `innerText` reflects `text-transform`, so this must not care about casing.
   'the panel summarises how many attacks held',
-  /\d+ of \d+ held/.test((await page.locator('.attack-list').locator('..').innerText()) ?? '')
+  /\d+ of \d+ held/i.test((await page.locator('.attack-list').locator('..').innerText()) ?? '')
 );
 
 // Attacks are real tool calls, so they must have cost budget and appear in the ledger.
@@ -246,9 +260,7 @@ const ledgerAfterAttacks = await page.locator('.ledger .row').count();
 check('attacks appear in the ledger', ledgerAfterAttacks > 5, `${ledgerAfterAttacks} rows`);
 
 if (webmcpAvailable) {
-  const dimAfter = await toolChips.evaluateAll(
-    (els) => els.filter((e) => e.style.opacity === '' || e.style.opacity === '1').length
-  );
+  const dimAfter = await registeredChipCount();
   check(
     'analysis tools register once a dataset exists',
     dimAfter > dimBefore,

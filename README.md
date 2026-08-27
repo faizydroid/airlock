@@ -383,3 +383,14 @@ Run it with `npm run probe`.
 ## Licence
 
 MIT. See [LICENSE](LICENSE).
+
+**Space Grotesk** (© 2020 The Space Grotesk Project Authors) is embedded in the stylesheet as a
+base64 woff2 face under the SIL Open Font License 1.1 — see
+[licenses/SIL-OFL-1.1-Space-Grotesk.txt](licenses/SIL-OFL-1.1-Space-Grotesk.txt). Latin subset,
+weight 700, unmodified.
+
+It is embedded rather than linked from Google Fonts on purpose. A webfont request would falsify the
+"zero network requests after load" claim above, and it would send every visitor's IP address to a
+third party — which is not a defensible thing for a product about not disclosing data to do. The
+generator is `scripts/embed-font.mjs`; the committed output means the repository also builds with no
+network access.

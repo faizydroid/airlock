@@ -17,12 +17,26 @@
  * No chart library, deliberately: libraries attach raw arrays to DOM nodes (`__data__`), emit
  * tooltips and write numeric `aria-label`s, all of which are disclosure channels that would then
  * need auditing. Hand-drawn to canvas has none of that surface.
+ *
+ * On styling: a canvas cannot inherit a class, so this is the one place a palette could drift out
+ * of sync with the stylesheet. Rather than hardcode a second copy of the design tokens, the series
+ * are declared as custom-property *names* and resolved at paint time from `:root`. The legend uses
+ * the same names through `var()`. One source of truth, and changing a token in styles.css moves the
+ * bars with it.
  */
 
 import { useEffect, useRef } from 'react';
 import type { AggregateOk, Cell } from '../kernel/kernel.js';
 
-const SERIES_COLOURS = ['#58a6ff', '#f0883e', '#3fb950', '#bc8cff', '#d29922', '#f85149'];
+/**
+ * Series palette, in assignment order.
+ *
+ * Black leads because the bars are the record, and because a single-series chart — the common case
+ * — should read as ink on paper rather than as a colour choice. Red sits late: it means alarm
+ * everywhere else in the interface, and spending it on the second series would blunt the only
+ * signal that matters.
+ */
+const SERIES_TOKENS = ['--ink', '--violet', '--yellow', '--red', '--white', '--paper'] as const;
 
 interface Props {
   result: AggregateOk;
@@ -31,6 +45,28 @@ interface Props {
 function label(cell: Cell, dims: string[]): string {
   if (dims.length === 0) return 'All employees';
   return dims.map((d) => cell.group[d]).join(' · ');
+}
+
+/**
+ * Resolves the design tokens the canvas needs. Falls back to literals only for the pathological
+ * case where the stylesheet has not applied, so a missing token can never paint invisible bars.
+ */
+function readTokens() {
+  const cs = getComputedStyle(document.documentElement);
+  const get = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
+
+  return {
+    ink: get('--ink', '#000000'),
+    violet: get('--violet', '#c4b5fd'),
+    grid: get('--texture', 'rgba(0,0,0,0.1)'),
+    series: SERIES_TOKENS.map((t) =>
+      get(
+        t,
+        // Order-matched fallbacks, used only if :root is unavailable.
+        { '--ink': '#000000', '--violet': '#c4b5fd', '--yellow': '#ffd93d', '--red': '#ff6b6b', '--white': '#ffffff', '--paper': '#fffdf5' }[t]!
+      )
+    )
+  };
 }
 
 export function Chart({ result }: Props) {
@@ -47,9 +83,13 @@ export function Chart({ result }: Props) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    const t = readTokens();
+
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.parentElement?.clientWidth ?? 700;
     const cssH = 260;
+    // Assigning width resets the context, including its transform, so the scale below is applied
+    // to a clean state on every repaint.
     canvas.width = cssW * dpr;
     canvas.height = cssH * dpr;
     canvas.style.height = `${cssH}px`;
@@ -57,7 +97,7 @@ export function Chart({ result }: Props) {
 
     ctx.clearRect(0, 0, cssW, cssH);
 
-    const pad = { top: 16, right: 12, bottom: 46, left: 62 };
+    const pad = { top: 16, right: 12, bottom: 48, left: 64 };
     const plotW = cssW - pad.left - pad.right;
     const plotH = cssH - pad.top - pad.bottom;
 
@@ -65,22 +105,24 @@ export function Chart({ result }: Props) {
     const max = values.length ? Math.max(...values) : 1;
     const scale = (v: number) => plotH - (v / (max * 1.1)) * plotH;
 
-    // Axes and gridlines.
-    ctx.strokeStyle = '#232a37';
-    ctx.fillStyle = '#7b8798';
-    ctx.font = '10px ui-monospace, monospace';
-    ctx.lineWidth = 1;
+    // Bold mono for every numeral, matching the stylesheet's "evidence voice".
+    ctx.font = '700 10px ui-monospace, SFMono-Regular, Consolas, monospace';
 
+    // Gridlines: the sanctioned low-alpha black the style permits for texture, at hairline weight
+    // so they sit behind the bars rather than competing with them.
+    ctx.strokeStyle = t.grid;
+    ctx.lineWidth = 1;
     const ticks = 4;
     for (let i = 0; i <= ticks; i++) {
       const v = (max * 1.1 * i) / ticks;
-      const y = pad.top + scale(v);
+      const y = Math.round(pad.top + scale(v)) + 0.5;
       ctx.beginPath();
       ctx.moveTo(pad.left, y);
       ctx.lineTo(pad.left + plotW, y);
       ctx.stroke();
+      ctx.fillStyle = t.ink;
       ctx.textAlign = 'right';
-      ctx.fillText(compact(v), pad.left - 7, y + 3);
+      ctx.fillText(compact(v), pad.left - 9, y + 3);
     }
 
     // Bars.
@@ -97,29 +139,53 @@ export function Chart({ result }: Props) {
         );
         const cx = pad.left + groupW * xi + groupW * 0.14 + si * barW;
         const value = cell?.value;
+        const w = Math.max(2, barW - 2.5);
 
         if (value === undefined) {
-          // Withheld cohorts are drawn as a low stub rather than omitted. Visible absence is the
-          // honest representation: an empty gap would read as "no data", which is a different
-          // claim from "not disclosed".
-          ctx.fillStyle = '#1f2632';
-          ctx.fillRect(cx, pad.top + plotH - 5, barW - 1.5, 5);
+          // Withheld cohorts are drawn as a low outlined stub rather than omitted. Visible absence
+          // is the honest representation: an empty gap would read as "no data", which is a
+          // different claim from "not disclosed". Violet matches the withheld cell in the table
+          // below and the legend swatch, so the three agree without a caption.
+          const h = 9;
+          ctx.fillStyle = t.violet;
+          ctx.fillRect(cx, pad.top + plotH - h, w, h);
+          ctx.strokeStyle = t.ink;
+          ctx.lineWidth = 2;
+          ctx.strokeRect(cx + 1, pad.top + plotH - h + 1, w - 2, h - 2);
           continue;
         }
 
-        ctx.fillStyle = SERIES_COLOURS[si % SERIES_COLOURS.length]!;
         const y = pad.top + scale(value);
-        ctx.fillRect(cx, y, barW - 1.5, plotH - scale(value));
+        const h = plotH - scale(value);
+
+        // Fill, then a hard black outline. The outline is the load-bearing detail: it is what makes
+        // a white or yellow series legible on a white panel, and it is the chart's share of the
+        // "every element has a border" rule. No drop shadow — grouped bars sit close enough that an
+        // offset shadow would fall across the neighbouring bar.
+        ctx.fillStyle = t.series[si % t.series.length]!;
+        ctx.fillRect(cx, y, w, h);
+        ctx.strokeStyle = t.ink;
+        ctx.lineWidth = 2;
+        ctx.strokeRect(cx + 1, y + 1, w - 2, Math.max(0, h - 1));
       }
 
-      ctx.fillStyle = '#7b8798';
+      ctx.fillStyle = t.ink;
       ctx.textAlign = 'center';
       const cx = pad.left + groupW * xi + groupW / 2;
-      ctx.fillText(truncate(String(x), Math.floor(groupW / 6)), cx, pad.top + plotH + 15);
+      ctx.fillText(truncate(String(x), Math.floor(groupW / 6)), cx, pad.top + plotH + 17);
     }
 
+    // Axes drawn last and heavy, so the plot sits inside a visible structure rather than floating.
+    ctx.strokeStyle = t.ink;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(pad.left - 1.5, pad.top);
+    ctx.lineTo(pad.left - 1.5, pad.top + plotH + 1.5);
+    ctx.lineTo(pad.left + plotW, pad.top + plotH + 1.5);
+    ctx.stroke();
+
     // Axis captions.
-    ctx.fillStyle = '#4d5768';
+    ctx.fillStyle = t.ink;
     ctx.textAlign = 'left';
     ctx.fillText(xDim ?? 'whole company', pad.left, cssH - 8);
     ctx.textAlign = 'right';
@@ -150,14 +216,14 @@ export function Chart({ result }: Props) {
         {seriesDim
           ? series.map((s, i) => (
               <span key={s}>
-                <i style={{ background: SERIES_COLOURS[i % SERIES_COLOURS.length] }} />
+                <i style={{ background: `var(${SERIES_TOKENS[i % SERIES_TOKENS.length]})` }} />
                 {s}
               </span>
             ))
           : null}
         {withheld > 0 ? (
           <span>
-            <i style={{ background: '#1f2632' }} />
+            <i style={{ background: 'var(--violet)' }} />
             {withheld} cohort{withheld === 1 ? '' : 's'} withheld — below the disclosure floor
           </span>
         ) : null}
@@ -167,6 +233,8 @@ export function Chart({ result }: Props) {
 }
 
 function compact(v: number): string {
+  // The axis origin is always exactly zero, and `0.00` there was just noise on every screenshot.
+  if (v === 0) return '0';
   if (v >= 1000) return `${Math.round(v / 1000)}k`;
   if (v >= 1) return String(Math.round(v));
   return v.toFixed(2);
