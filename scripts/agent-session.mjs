@@ -44,13 +44,20 @@
  *
  * USAGE
  *
- *   node scripts/agent-session.mjs --dry-run     # no model, no key: proves the plumbing
- *   node scripts/agent-session.mjs               # real model; needs a key in the environment
+ *   node scripts/agent-session.mjs --dry-run     # no model, no credentials: proves the plumbing
+ *   node scripts/agent-session.mjs               # real model
  *
- *   ANTHROPIC_API_KEY=...  or  OPENAI_API_KEY=...  or  GEMINI_API_KEY=...
+ * Providers, in the order they are auto-detected:
  *
- * The key is read from the environment only. It is never written to disk, never echoed, and never
- * placed in the transcript.
+ *   ANTHROPIC_API_KEY   OPENAI_API_KEY   GEMINI_API_KEY   then Amazon Bedrock
+ *
+ * Bedrock needs no key in the environment — it resolves credentials through the standard AWS
+ * provider chain (environment, shared config, SSO, instance role) and probes for a model the account
+ * can actually invoke. Force a provider with AGENT_PROVIDER=bedrock|anthropic|openai|gemini, pick a
+ * model with AGENT_MODEL, and a region with AWS_REGION.
+ *
+ * Credentials are read from the environment or the AWS chain only. Nothing is written to disk, echoed
+ * to the console, or placed in the transcript.
  */
 import { chromium } from 'playwright';
 import http from 'node:http';
@@ -87,11 +94,130 @@ fs.mkdirSync(artifacts, { recursive: true });
  * twenty lines.
  */
 
-function pickProvider() {
+async function pickProvider() {
+  const forced = process.env.AGENT_PROVIDER?.toLowerCase();
+  if (forced === 'bedrock') return bedrock();
+  if (forced === 'anthropic') return anthropic();
+  if (forced === 'openai') return openai();
+  if (forced === 'gemini') return gemini();
+
   if (process.env.ANTHROPIC_API_KEY) return anthropic();
   if (process.env.OPENAI_API_KEY) return openai();
   if (process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY) return gemini();
-  return null;
+
+  // Bedrock last, because it is the only one whose credentials do not announce themselves in an
+  // environment variable — they come from the AWS provider chain (env, shared config, SSO, IMDS).
+  // If that chain resolves nothing, the client throws and we report it plainly.
+  return bedrock();
+}
+
+/**
+ * Amazon Bedrock, via the Converse API.
+ *
+ * Converse is the reason this adapter is short: it normalises tool use across Anthropic, Nova,
+ * Llama and Mistral, so one code path covers every model an account might have access to.
+ *
+ * The AWS SDK is used here rather than hand-rolled SigV4. Two reasons, both practical: it resolves
+ * credentials through the standard provider chain, so nobody has to paste a key anywhere; and model
+ * IDs contain a colon (`...-v1:0`) which has to be percent-encoded in the request path *and* in the
+ * SigV4 canonical request, and getting that wrong yields an opaque 403. This is a devDependency in a
+ * verification script — it never enters the shipped bundle, and `verify-no-egress.mjs` only scans
+ * `dist/assets/*.js`.
+ */
+function bedrock() {
+  const region = process.env.AWS_REGION ?? process.env.AWS_DEFAULT_REGION ?? 'us-east-1';
+
+  /**
+   * Access differs per account, and the newer models are only reachable through cross-region
+   * inference profiles (the `us.` prefix) rather than as bare on-demand model IDs. Rather than
+   * hardcode a guess, probe cheapest-first and use the first that answers.
+   */
+  const CANDIDATES = [
+    'us.anthropic.claude-haiku-4-5-20251001-v1:0',
+    'us.anthropic.claude-sonnet-4-5-20250929-v1:0',
+    'anthropic.claude-3-haiku-20240307-v1:0',
+    'us.amazon.nova-pro-v1:0',
+    'us.amazon.nova-lite-v1:0'
+  ];
+
+  let client;
+  let ConverseCommand;
+  let modelId = process.env.AGENT_MODEL ?? null;
+
+  return {
+    label: `bedrock/${modelId ?? 'auto'} (${region})`,
+
+    async init(log) {
+      const sdk = await import('@aws-sdk/client-bedrock-runtime');
+      ConverseCommand = sdk.ConverseCommand;
+      client = new sdk.BedrockRuntimeClient({ region });
+
+      if (modelId) {
+        this.label = `bedrock/${modelId} (${region})`;
+        return;
+      }
+
+      const failures = [];
+      for (const candidate of CANDIDATES) {
+        try {
+          await client.send(
+            new ConverseCommand({
+              modelId: candidate,
+              messages: [{ role: 'user', content: [{ text: 'ok' }] }],
+              inferenceConfig: { maxTokens: 1 }
+            })
+          );
+          modelId = candidate;
+          this.label = `bedrock/${candidate} (${region})`;
+          log(`  reachable: ${candidate}`);
+          return;
+        } catch (e) {
+          failures.push(`  ${candidate}\n      ${e.name}: ${(e.message ?? '').slice(0, 160)}`);
+        }
+      }
+      throw new Error(
+        `no reachable Bedrock model in ${region}. Tried:\n${failures.join('\n')}\n\n`
+          + 'Model access is granted per-account per-region in the Bedrock console under\n'
+          + '"Model access". Set AGENT_MODEL to target a specific one, or AWS_REGION to change region.'
+      );
+    },
+
+    async turn(history, tools) {
+      const res = await client.send(
+        new ConverseCommand({
+          modelId,
+          messages: history,
+          toolConfig: {
+            tools: tools.map((t) => ({
+              toolSpec: {
+                name: t.name,
+                description: t.description,
+                inputSchema: { json: t.schema }
+              }
+            }))
+          },
+          inferenceConfig: { maxTokens: 2048 }
+        })
+      );
+      const content = res.output?.message?.content ?? [];
+      return {
+        raw: { role: 'assistant', content },
+        text: content.filter((b) => b.text).map((b) => b.text).join('\n'),
+        calls: content
+          .filter((b) => b.toolUse)
+          .map((b) => ({ id: b.toolUse.toolUseId, name: b.toolUse.name, args: b.toolUse.input ?? {} }))
+      };
+    },
+
+    assistantMessage: (r) => r.raw,
+    resultMessage: (results) => ({
+      role: 'user',
+      content: results.map((r) => ({
+        toolResult: { toolUseId: r.id, content: [{ text: r.output }] }
+      }))
+    }),
+    userMessage: (text) => ({ role: 'user', content: [{ text }] })
+  };
 }
 
 /** Normalised shape every adapter returns: { text, calls: [{ id, name, args }] } */
@@ -331,6 +457,10 @@ const discovered = await page.evaluate(async () => {
     name: t.name,
     keys: Object.keys(t),
     description: t.description ?? null,
+    // Recorded because it is not what the spec's shape suggests: Chrome hands `inputSchema` back as
+    // a JSON *string*, even though `registerTool` accepts an object. Captured as observed rather
+    // than normalised here, so the transcript documents the platform's actual behaviour.
+    schemaType: typeof t.inputSchema,
     schema: t.inputSchema ?? null,
     annotations: t.annotations ?? null
   }));
@@ -341,7 +471,7 @@ console.log(`tools after load : ${discovered.length}\n`);
 for (const t of discovered) {
   console.log(`  ${t.name}`);
   console.log(`    keys      : ${t.keys.join(', ')}`);
-  console.log(`    schema    : ${t.schema ? 'present' : 'MISSING from getTools()'}`);
+  console.log(`    schema    : ${t.schema ? `present (${t.schemaType})` : 'MISSING from getTools()'}`);
   console.log(`    desc      : ${(t.description ?? '(none)').slice(0, 96)}…`);
 }
 console.log('');
@@ -411,13 +541,13 @@ if (DRY_RUN) {
 
 /* ---- real model ---- */
 
-const provider = pickProvider();
-if (!provider) {
-  console.error(
-    'No model key found. Set one of:\n'
-      + '  ANTHROPIC_API_KEY   OPENAI_API_KEY   GEMINI_API_KEY\n\n'
-      + 'Or run with --dry-run to verify the harness without a model.'
-  );
+const provider = await pickProvider();
+
+console.log('resolving model…');
+try {
+  if (provider.init) await provider.init((m) => console.log(m));
+} catch (e) {
+  console.error(`\nCould not reach a model.\n\n${e.message}\n`);
   await browser.close();
   server.close();
   process.exit(1);
@@ -425,10 +555,30 @@ if (!provider) {
 
 console.log(`model: ${provider.label}\n`);
 
+/**
+ * Normalises a tool's parameter schema for a model provider.
+ *
+ * `getTools()` returns `inputSchema` as a serialized JSON string. Every provider's tool-calling API
+ * expects a JSON Schema *object* — Bedrock's Converse rejects a string outright with
+ * "Provide a json object for the field". So a WebMCP client has to parse it, which is worth knowing
+ * because nothing in the documentation says so.
+ */
+function parseSchema(raw) {
+  const empty = { type: 'object', properties: {} };
+  if (!raw) return empty;
+  if (typeof raw === 'object') return raw;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? parsed : empty;
+  } catch {
+    return empty;
+  }
+}
+
 const toolDefs = discovered.map((t) => ({
   name: t.name,
   description: t.description ?? t.name,
-  schema: t.schema ?? { type: 'object', properties: {} }
+  schema: parseSchema(t.schema)
 }));
 
 let history = [provider.userMessage(GOAL)];

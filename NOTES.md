@@ -221,6 +221,14 @@ schemas rather than guessing argument shapes from prose — which is the entire 
 enums in the first place. Had `getTools()` dropped `inputSchema`, the "no free-form query" defence
 would have been invisible to the very consumer it was designed for.
 
+**But it comes back as a JSON *string*, not an object.** `registerTool` accepts `inputSchema` as an
+object; `getTools()` returns it serialized. Every model provider's tool-calling API expects a JSON
+Schema object — Bedrock's Converse rejects a string outright with *"The format of the value at
+toolConfig.tools.0.toolSpec.inputSchema.json is invalid. Provide a json object for the field."* So a
+WebMCP client has to `JSON.parse` it. Nothing in the documentation says so, and the asymmetry between
+what you put in and what you get out is easy to miss because the field is present and non-empty
+either way. `parseSchema()` in `scripts/agent-session.mjs` handles both shapes.
+
 Also confirmed through the platform path rather than through our own code:
 
 - **State gating is visible to an agent.** `getTools()` returns 2 tools before a human loads the

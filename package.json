@@ -5,7 +5,10 @@
   "type": "module",
   "description": "A browser tab where your agent analyses data it never sees.",
   "homepage": "https://airlock.dofolabs.space",
-  "repository": { "type": "git", "url": "https://github.com/faizydroid/airlock.git" },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/faizydroid/airlock.git"
+  },
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -31,6 +34,7 @@
     "react-dom": "19.0.0"
   },
   "devDependencies": {
+    "@aws-sdk/client-bedrock-runtime": "3.1119.0",
     "@types/node": "22.13.1",
     "@types/react": "19.0.8",
     "@types/react-dom": "19.0.3",
