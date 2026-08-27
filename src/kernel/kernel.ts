@@ -158,12 +158,53 @@ export class Kernel {
   #ledger: LedgerEntry[] = [];
   #seq = 0;
 
+  /**
+   * Running total of individual values released. Structurally always zero.
+   *
+   * This is not a variable that could become non-zero: no code path places a record in a tool
+   * response. It exists so the UI can display a figure that is derived rather than hardcoded,
+   * which is a meaningfully different claim to a reader checking the source.
+   */
+  #recordsReleased = 0;
+
+  /** Aggregate values released. This one does move, and it is the honest denominator. */
+  #valuesReleased = 0;
+
+  /** Size of the dataset if it were uploaded. Computed once; metadata, not content. */
+  #datasetBytes = 0;
+
   constructor(budget = BUDGET_CELLS) {
     this.#budget = budget;
   }
 
   get loaded(): boolean {
     return this.#rows !== null;
+  }
+
+  get recordsReleased(): number {
+    return this.#recordsReleased;
+  }
+
+  get valuesReleased(): number {
+    return this.#valuesReleased;
+  }
+
+  /**
+   * What sending this dataset to a model would have cost.
+   *
+   * The counterfactual is the point. A standalone zero has no scale — put the alternative beside
+   * it and the negative space becomes a quantity a reader can feel.
+   *
+   * Byte count is exact for a JSON serialisation. The token figure is the conventional
+   * bytes-over-four estimate and is labelled as approximate wherever it is displayed; claiming
+   * precision we do not have would undercut the rest of the project.
+   */
+  get uploadCost(): { rows: number; bytes: number; approxTokens: number } {
+    return {
+      rows: this.#rows?.length ?? 0,
+      bytes: this.#datasetBytes,
+      approxTokens: Math.round(this.#datasetBytes / 4)
+    };
   }
 
   get remaining(): number {
@@ -183,6 +224,8 @@ export class Kernel {
 
   loadSample(opts: { seed?: number; count?: number } = {}): Profile | Refusal {
     this.#rows = generateEmployees(opts);
+    // Measured once at load. The rows themselves never leave; only this length does.
+    this.#datasetBytes = JSON.stringify(this.#rows).length;
     this.#record('load_sample', { ...opts }, 'ok', 0);
     return this.profile() as Profile;
   }
@@ -290,6 +333,7 @@ export class Kernel {
     const unit = metric ? METRICS[metric].unit : 'count';
     const cells: Cell[] = [];
     let charged = 0;
+    let released = 0;
 
     for (const [key, rows] of buckets) {
       const group = parseKey(key, groupBy);
@@ -322,6 +366,7 @@ export class Kernel {
 
       cells.push({ group, count: band, value: quantize(computeStat(stat, values), unit) });
       charged += 1;
+      released += 1;
     }
 
     // The budget is a bound, not a trigger. Checking only that something remained before
@@ -332,6 +377,7 @@ export class Kernel {
     }
 
     this.#charged += charged;
+    this.#valuesReleased += released;
     this.#record('aggregate', asked, 'ok', charged);
 
     return {
@@ -482,6 +528,7 @@ export class Kernel {
     }
 
     this.#charged += charged;
+    this.#valuesReleased += results.filter((r) => r.gapPct !== null).length;
     this.#record('adjusted_gap', asked, 'ok', charged);
 
     return {

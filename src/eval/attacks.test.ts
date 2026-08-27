@@ -2,6 +2,9 @@ import { describe, it, expect } from 'vitest';
 import { Kernel } from '../kernel/kernel.js';
 import { N_NUMERIC_FLOOR } from '../kernel/policy.js';
 import { generateEmployees } from '../data/generate.js';
+import { ATTACK_SPECS, classify } from './attack-specs.js';
+import { allToolDefs } from '../tools/tools.js';
+import { store } from '../app/store.js';
 
 /**
  * Adversarial evaluation.
@@ -428,5 +431,67 @@ describe('summary: every disclosed value came from a large enough cohort', () =>
 
     // Guard against the loop silently checking nothing.
     expect(checked).toBeGreaterThan(200);
+  });
+});
+
+/* ------------------------------------------------------------------ *
+ * The one-click attack panel                                         *
+ * ------------------------------------------------------------------ */
+
+describe('the interactive attack panel cannot lie', () => {
+  /**
+   * The UI renders ATTACK_SPECS as buttons and displays each declared outcome. These assertions
+   * are what make that honest: every spec is fired through the real tool handler and checked
+   * against what the panel promises.
+   *
+   * If a control is ever weakened, the button and the test fail together rather than the button
+   * quietly continuing to claim a refusal that no longer happens.
+   */
+  const byName = new Map(allToolDefs.map((t) => [t.name, t]));
+  const signal = new AbortController().signal;
+
+  it('references only tools that exist', () => {
+    for (const spec of ATTACK_SPECS) {
+      expect(byName.has(spec.tool), `${spec.id} references unknown tool ${spec.tool}`).toBe(true);
+    }
+  });
+
+  it('has no duplicate identifiers', () => {
+    const ids = ATTACK_SPECS.map((s) => s.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it.each(ATTACK_SPECS.map((s) => [s.id, s] as const))(
+    '%s behaves exactly as the panel claims',
+    async (_id, spec) => {
+      store.reset();
+      store.loadDataset();
+
+      const def = byName.get(spec.tool)!;
+      const output = await def.execute(spec.input, { signal });
+
+      expect(classify(output), `${spec.id}: ${spec.label}`).toBe(spec.expect);
+
+      if (spec.code) {
+        expect((output as { code?: string }).code, `${spec.id} policy code`).toBe(spec.code);
+      }
+    }
+  );
+
+  it('never discloses on any listed attack', async () => {
+    store.reset();
+    store.loadDataset();
+    for (const spec of ATTACK_SPECS) {
+      const def = byName.get(spec.tool)!;
+      const output = await def.execute(spec.input, { signal });
+      expect(classify(output), `${spec.id} must not disclose freely`).not.toBe('disclosed');
+    }
+  });
+
+  it('explains the stakes for every attack, so a refusal is legible', () => {
+    for (const spec of ATTACK_SPECS) {
+      expect(spec.stakes.length, `${spec.id} stakes`).toBeGreaterThan(40);
+      expect(spec.label.length, `${spec.id} label`).toBeGreaterThan(10);
+    }
   });
 });

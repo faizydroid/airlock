@@ -48,13 +48,22 @@ the ledger. The counter still reads **0**.
 
 Beat. Let the red row sit on screen for a second.
 
-### 0:15 – 0:35 · The problem, in one sentence
+### 0:15 – 0:35 · The problem, and the counterfactual
 
-Screen: the counter, then a slow pan across the ledger.
+Screen: the two counter blocks, side by side. This is the strongest single frame in the app — do
+not narrate over a static shot, cut straight to it.
 
-> "This is a compensation file for five thousand employees. Nobody uploads that to a chatbot — so
-> today, you get no help with it at all. Airlock is a browser tab where your agent analyses a file
-> it never sees. The data never leaves this page. There is no server."
+> "Five thousand employees. Uploading that file means sending about two hundred and twenty-five
+> thousand tokens — it doesn't even fit in most context windows, and nobody is putting their
+> payroll in a chatbot anyway. So today you get no help with it at all."
+
+Beat, then point at the right-hand block:
+
+> "This agent has received zero people and ninety-eight aggregate numbers. It ran the whole audit
+> on that."
+
+The point of the frame is that zero has scale. A bare zero is decoration; a zero beside 5,000 is a
+measurement.
 
 ### 0:35 – 1:35 · The audit, as a visible chain of tool calls
 
@@ -99,7 +108,21 @@ Then the line that buys the most credibility with this panel:
 Show tools appearing and disappearing as state changes. Ten seconds of a live tool list mutating
 outscores thirty seconds of chart tour.
 
-### 2:10 – 2:35 · The human holds the veto
+### 2:10 – 2:25 · Hand the attacks to the viewer
+
+Screen: the **Try to break it** panel. Click **Run all**, let the verdicts land.
+
+> "You don't have to take my word for any of this. These are the same attacks the test suite runs,
+> so every outcome you see here is one a test asserts — including two that succeeded against an
+> earlier build. Seven of seven held."
+
+Hold on one result long enough that `verified by test A2` is readable. That line is the whole
+argument about trust: the demo cannot claim an outcome the tests do not prove.
+
+This is the beat most likely to be remembered, because it converts the viewer from someone being
+shown a claim into someone testing one.
+
+### 2:25 – 2:40 · The human holds the veto
 
 Agent calls `request_threshold_override` with a justification. The approval card appears. Click
 **Deny**.
@@ -107,7 +130,7 @@ Agent calls `request_threshold_override` with a justification. The approval card
 > "When the agent wants to look at smaller cohorts, it has to ask. It returns immediately and
 > polls — it never blocks the tab. The decision is recorded either way, with the reason it gave."
 
-### 2:35 – 2:50 · Close
+### 2:40 – 2:55 · Close
 
 Screen: export the report, show the disclosure record at the top of the markdown.
 

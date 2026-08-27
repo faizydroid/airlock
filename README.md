@@ -8,9 +8,26 @@ Live: **https://airlock.dofolabs.space**
 pay-equity audit through a bounded, budgeted, fully audited tool interface — and never receives a
 single employee record through any channel.
 
-> **No agent, no flag, no setup?** Press **Replay the audit**. It drives the real tool handlers
-> through a scripted session, so the ledger, the budget, the charts and the refusals are all
-> genuine. Nothing is mocked.
+> **No agent, no flag, no setup?**
+>
+> - **[Watch the audit run](https://airlock.dofolabs.space/?replay=1)** — starts on load, drives the
+>   real tool handlers, nothing mocked.
+> - **[Try to break it](https://airlock.dofolabs.space/?attack=1)** — fire the attack suite at the
+>   live app yourself.
+
+### The number that makes the point
+
+```
+Uploading this file would have sent      5,000 people · 882 kB · ~225,810 tokens
+Actually disclosed to the agent              0 people ·  98 aggregate values
+```
+
+That token figure doesn't fit in most context windows, which is part of why the answer today is
+"you get no help at all". Both sides are derived — the left from measuring the loaded dataset, the
+right from a counter the kernel increments each time a value actually leaves. Neither is a literal
+in the source.
+
+A bare zero is decoration. A zero beside 5,000 is a measurement.
 
 Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
 
@@ -210,6 +227,20 @@ finished build, so none can silently return.
 
 The results table is derived from the test names, so an attack that is quietly deleted also
 disappears from the published claim.
+
+### Fire them yourself
+
+**[airlock.dofolabs.space/?attack=1](https://airlock.dofolabs.space/?attack=1)**
+
+The app ships a panel of one-click attacks. Each button makes a real tool call and shows the
+outcome with its policy code.
+
+The design property that matters: the buttons are generated from `src/eval/attack-specs.ts`, **the
+same array the test suite iterates.** A test asserts every declared outcome, so the panel cannot
+claim a refusal the tests do not verify. Weaken a control and the button and the test fail together.
+Each result cites the test that proves it.
+
+A security claim someone tests themselves lands differently from one they are told.
 
 ### Two attacks that succeeded, and what changed
 

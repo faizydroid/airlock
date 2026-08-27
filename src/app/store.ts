@@ -70,11 +70,15 @@ export interface AppState {
    * a number that looks measured but is constant invites exactly the scepticism it should
    * disarm.
    */
-  recordsDisclosed: 0;
+  recordsDisclosed: number;
   replaying: boolean;
   replayCaption: string | null;
   /** Total budget, read from the kernel so an extension cannot desynchronise the display. */
   budgetTotal: number;
+  /** Aggregate values released so far. The honest denominator beside the zero. */
+  valuesReleased: number;
+  /** What sending the dataset to a model would have cost. The counterfactual. */
+  upload: { rows: number; bytes: number; approxTokens: number };
 }
 
 type Listener = () => void;
@@ -126,7 +130,11 @@ export class Store {
       ledger: this.kernel.getLedger(),
       budget: { charged: 0, remaining: this.kernel.remaining },
       budgetTotal: this.kernel.budgetTotal,
-      recordsDisclosed: 0,
+      // Read from the kernel rather than written as a literal here. Structurally zero either way,
+      // but a derived zero is a different claim to a hardcoded one.
+      recordsDisclosed: this.kernel.recordsReleased,
+      valuesReleased: this.kernel.valuesReleased,
+      upload: this.kernel.uploadCost,
       replaying: this.replaying,
       replayCaption: this.replayCaption
     };

@@ -5,6 +5,8 @@ import { registry, syncRegistration, allToolDefs } from '../tools/tools.js';
 import { isSupported } from '../tools/webmcp.js';
 import { BUDGET_CELLS, N_NUMERIC_FLOOR } from '../kernel/policy.js';
 import { Chart, label } from './Chart.js';
+import { Counters } from './Counters.js';
+import { AttackPanel } from './AttackPanel.js';
 import { startReplay, isReplaying, stopReplay } from '../replay/replay.js';
 import type { LedgerEntry } from '../kernel/kernel.js';
 
@@ -19,9 +21,38 @@ export function App() {
   const s = useStore();
   const supported = useMemo(() => isSupported(), []);
   const previousTools = useRef<string[]>([]);
+  const autostarted = useRef(false);
 
   useEffect(() => {
     syncRegistration();
+  }, []);
+
+  /**
+   * Deep links, so a shared URL is the demo rather than an invitation to press something.
+   *
+   *   ?replay=1  starts the audit immediately
+   *   ?attack=1  loads the dataset and scrolls to the attack panel
+   *
+   * The highest-friction step in a first visit is a person deciding whether to click. Removing that
+   * decision is worth more than any feature, especially for a reader who has a queue of other
+   * things to look at.
+   */
+  useEffect(() => {
+    if (autostarted.current) return;
+    autostarted.current = true;
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.has('replay')) {
+      startReplay();
+      return;
+    }
+    if (params.has('attack')) {
+      store.loadDataset();
+      syncRegistration();
+      requestAnimationFrame(() => {
+        document.getElementById('attack')?.scrollIntoView({ behavior: 'smooth' });
+      });
+    }
   }, []);
 
   const toolNames = registry.registeredNames;
@@ -65,14 +96,9 @@ export function App() {
           </div>
         </div>
 
-        <div
-          className="counter"
-          title="Structurally zero: no code path can place a record in a tool response or in the DOM."
-        >
-          <b>{s.recordsDisclosed}</b>
-          <i>individual records disclosed — structurally zero, not counted</i>
-        </div>
       </header>
+
+      <Counters state={s} />
 
       {s.replayCaption && (
         <div className="notice" role="status">
@@ -152,6 +178,10 @@ export function App() {
               </div>
             )}
           </section>
+
+          <div id="attack">
+            <AttackPanel loaded={s.loaded} />
+          </div>
 
           <section className="panel">
             <h2>

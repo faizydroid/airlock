@@ -133,13 +133,17 @@ check('no uncaught page errors', pageErrors.length === 0, pageErrors.join(' | ')
 check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | ').slice(0, 300));
 
 check('brand visible', await page.getByText('Airlock').first().isVisible());
+
+/* ---- the counterfactual counters ---- */
+
 check(
-  'counter reads zero on load',
-  (await page.locator('.counter b').textContent())?.trim() === '0'
+  'the counterfactual is shown beside the outcome',
+  (await page.locator('.counter-block.would').isVisible())
+    && (await page.locator('.counter-block.did').isVisible())
 );
 check(
-  'counter is labelled as structurally zero',
-  (await page.locator('.counter i').textContent())?.includes('structurally zero') ?? false
+  'disclosed people reads zero on load',
+  (await page.locator('.counter-block.did .figures b').first().textContent())?.trim() === '0'
 );
 
 /* ---- WebMCP availability ---- */
@@ -197,6 +201,50 @@ check(
   )
 );
 
+/* ---- A: the counterfactual becomes concrete once data exists ---- */
+
+const wouldText = (await page.locator('.counter-block.would').innerText()) ?? '';
+check('upload counterfactual shows a row count', wouldText.includes('5,000'), wouldText.replace(/\n/g, ' | '));
+check('upload counterfactual shows a size', /\d+(\.\d+)?\s?(kB|MB)/.test(wouldText));
+check('upload counterfactual shows a token estimate', /tokens/.test(wouldText));
+
+/* ---- B: the attack panel ---- */
+
+const attackButtons = page.locator('.attack > button');
+check(
+  'attack panel renders one button per spec',
+  (await attackButtons.count()) >= 7,
+  `${await attackButtons.count()} attacks`
+);
+
+await page.getByRole('button', { name: /^Run all/ }).click();
+await page.waitForTimeout(2500);
+
+const verdicts = await page.locator('.attack-result .verdict').allInnerTexts();
+check('every attack produced a verdict', verdicts.length >= 7, `${verdicts.length} verdicts`);
+check(
+  'no attack disclosed',
+  !verdicts.some((v) => v.toLowerCase().includes('disclosed')),
+  verdicts.join(', ')
+);
+check(
+  'refusals carry a policy code',
+  (await page.locator('.attack-result code').count()) >= 4,
+  `${await page.locator('.attack-result code').count()} codes`
+);
+check(
+  'each result cites the test that verifies it',
+  (await page.locator('.attack-result .attack-test').count()) >= 7
+);
+check(
+  'the panel summarises how many attacks held',
+  /\d+ of \d+ held/.test((await page.locator('.attack-list').locator('..').innerText()) ?? '')
+);
+
+// Attacks are real tool calls, so they must have cost budget and appear in the ledger.
+const ledgerAfterAttacks = await page.locator('.ledger .row').count();
+check('attacks appear in the ledger', ledgerAfterAttacks > 5, `${ledgerAfterAttacks} rows`);
+
 if (webmcpAvailable) {
   const dimAfter = await toolChips.evaluateAll(
     (els) => els.filter((e) => e.style.opacity === '' || e.style.opacity === '1').length
@@ -235,8 +283,17 @@ check(
 );
 
 check(
-  'counter still reads zero after the whole audit',
-  (await page.locator('.counter b').textContent())?.trim() === '0'
+  'disclosed people still reads zero after the whole audit',
+  (await page.locator('.counter-block.did .figures b').first().textContent())?.trim() === '0'
+);
+check(
+  'aggregate values released is non-zero, so the zero has a denominator',
+  Number(
+    ((await page.locator('.counter-block.did .figures b').nth(1).textContent()) ?? '0').replace(
+      /,/g,
+      ''
+    )
+  ) > 10
 );
 
 /* ---- the chart actually painted ---- */
@@ -303,6 +360,41 @@ if (download) {
   check('report states its limitations', md.includes('## Limitations'));
 } else {
   check('report exports', false, 'no download event');
+}
+
+/* ------------------------------------------------------------------ *
+ * C: deep links                                                      *
+ * ------------------------------------------------------------------ */
+
+{
+  const p = await browser.newPage();
+  await p.goto(`${url}?replay=1`, { waitUntil: 'networkidle' });
+  // Replay resets and loads on its own; a few seconds is enough to see it moving.
+  await p.waitForTimeout(5000);
+  const rows = await p.locator('.ledger .row').count();
+  check('?replay=1 starts the audit with no interaction', rows > 0, `${rows} ledger rows`);
+  check(
+    '?replay=1 shows narration',
+    await p.locator('.notice[role="status"]').first().isVisible()
+  );
+  await p.close();
+}
+
+{
+  const p = await browser.newPage();
+  await p.goto(`${url}?attack=1`, { waitUntil: 'networkidle' });
+  await p.waitForTimeout(1200);
+  check(
+    '?attack=1 loads the dataset with no interaction',
+    ((await p.getByRole('button', { name: /Dataset loaded/i }).textContent()) ?? '').includes(
+      '5,000'
+    )
+  );
+  check(
+    '?attack=1 leaves the attacks ready to fire',
+    await p.locator('.attack > button').first().isEnabled()
+  );
+  await p.close();
 }
 
 await browser.close();
