@@ -206,6 +206,34 @@ All six probe tools registered. Confirms, beyond E1c itself:
   from any primary source. **Still use `document.modelContext`** — the alias is undocumented by
   Chrome and unsupported by the spec.
 
+### E15 — what `getTools()` actually publishes to an agent: RESOLVED (2026-08-27)
+
+From `node scripts/agent-session.mjs --dry-run` against the real build in Chrome 151. Every tool
+comes back with:
+
+```
+keys: description, inputSchema, name, annotations, origin, title, window
+```
+
+**`inputSchema` survives the round trip.** This is the finding that matters, and it was not
+documented anywhere we could find. It means an agent can plan against the enum-bounded parameter
+schemas rather than guessing argument shapes from prose — which is the entire reason the schemas are
+enums in the first place. Had `getTools()` dropped `inputSchema`, the "no free-form query" defence
+would have been invisible to the very consumer it was designed for.
+
+Also confirmed through the platform path rather than through our own code:
+
+- **State gating is visible to an agent.** `getTools()` returns 2 tools before a human loads the
+  dataset and 8 after. The ninth, `check_override_request`, appears only while a request is open.
+- **`executeTool(toolObject, argsObject)` — the spec's object form — works.** Chrome's docs still
+  show a string argument; the harness tries the object form first and has not needed the fallback.
+- **Refusals travel intact.** `summarize_metric` with `stat: "max"` returns
+  `{status:"refused", code:"STAT_NOT_PERMITTED", reason, recovery}` as a resolved value, not a
+  rejection — which is what the "never throw a refusal" rule in `webmcp.ts` exists to guarantee,
+  since the platform discards thrown error messages.
+- Tools additionally carry `origin` and `window`, so the browser tracks provenance per tool. Not
+  used here, but worth knowing for anyone reasoning about multi-frame pages.
+
 ### Standing gap after Day 1
 
 Flagged Chrome gives us the API but **no ChatGPT agent**. So these remain unanswerable until

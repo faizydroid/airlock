@@ -13,6 +13,8 @@
     "preview": "vite preview",
     "probe": "node probe/server.mjs",
     "build:probe": "node scripts/build-probe.mjs",
+    "agent": "node scripts/agent-session.mjs",
+    "agent:dry": "node scripts/agent-session.mjs --dry-run",
     "verify:egress": "node scripts/verify-no-egress.mjs",
     "verify:live": "node scripts/verify-live.mjs",
     "verify:browser": "vite build && node scripts/inject-token.mjs && node scripts/verify-browser.mjs",

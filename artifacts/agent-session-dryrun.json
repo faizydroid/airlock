@@ -1,0 +1,167 @@
+{
+  "toolsBefore": [
+    "describe_dataset",
+    "load_sample_dataset"
+  ],
+  "discovered": [
+    {
+      "name": "adjusted_pay_gap",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Reports the pay gap for each group against a reference group, comparing only within matching strata so composition cannot distort it. This is the tool to use for equity work: a raw gap by function is dominated by who sits at which level. Returns one percentage per group. Positive means that group earns less than the reference.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"metric\":{\"type\":\"string\",\"enum\":[\"baseSalary\",\"bonusPct\",\"equityValue\"],\"description\":\"Which figure to compare.\"},\"dimension\":{\"type\":\"string\",\"enum\":[\"level\",\"fn\",\"location\",\"tenureBand\",\"gender\",\"ethnicityBand\"],\"description\":\"The dimension whose groups are compared, for example gender.\"},\"reference\":{\"type\":\"string\",\"description\":\"The group everything is compared against, for example Male.\"},\"controlFor\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"level\",\"fn\",\"location\",\"tenureBand\",\"gender\",\"ethnicityBand\"]},\"description\":\"One or two dimensions to hold constant, for example level and fn.\"}},\"required\":[\"metric\",\"dimension\",\"reference\"]}",
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": false
+      }
+    },
+    {
+      "name": "count_cohorts",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Returns headcount for every cohort in a grouping. Counts are reported as bands such as \"5-9\" or \"10-24\" below 50 people, and exactly above that. Use it to find out which cohorts are large enough to analyse before asking for salary figures.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"groupBy\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"level\",\"fn\",\"location\",\"tenureBand\",\"gender\",\"ethnicityBand\"]},\"description\":\"One or two dimensions to group by. Omit for a whole-company total.\"}}}",
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": false
+      }
+    },
+    {
+      "name": "describe_dataset",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Returns the dataset schema: which dimensions can be grouped by, which metrics can be measured, and the disclosure policy in force. Contains no employee data and no cohort sizes. Use it to plan an analysis before spending disclosure budget.",
+      "schema": "{\"type\":\"object\",\"properties\":{}}",
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": false
+      }
+    },
+    {
+      "name": "get_audit_report",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Returns the audit report assembled so far: every finding, the disclosure ledger, and the budget spent. The ledger is the provenance record, listing every question asked and every question refused.",
+      "schema": "{\"type\":\"object\",\"properties\":{}}",
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": true
+      }
+    },
+    {
+      "name": "load_sample_dataset",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Loads a synthetic 5,000-employee compensation dataset into the page for analysis. The data stays in this browser tab and is never uploaded. Call this first; every analysis tool becomes available once it succeeds.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"seed\":{\"type\":\"number\",\"description\":\"Optional. Fixes the generated dataset so results are reproducible.\"}}}",
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": false
+      }
+    },
+    {
+      "name": "record_finding",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Adds a finding to the audit report shown in the page. Use it to record a conclusion once the analysis supports it, so the person at the keyboard can review, keep or discard it. The exported report carries the full disclosure ledger alongside every finding.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"title\":{\"type\":\"string\",\"description\":\"A short headline, under 100 characters.\"},\"detail\":{\"type\":\"string\",\"description\":\"What the analysis showed and which cohorts.\"},\"severity\":{\"type\":\"string\",\"enum\":[\"info\",\"concern\",\"critical\"],\"description\":\"How much attention this warrants.\"}},\"required\":[\"title\",\"detail\",\"severity\"]}",
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": true
+      }
+    },
+    {
+      "name": "request_threshold_override",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Asks the person at the keyboard to permit one analysis at a lower cohort-size threshold, currently 20. Returns immediately with a request id and does not block. The decision is theirs and is recorded. Poll check_override_request with the id once they have responded.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"metric\":{\"type\":\"string\",\"enum\":[\"baseSalary\",\"bonusPct\",\"equityValue\"],\"description\":\"Metric to analyse.\"},\"stat\":{\"type\":\"string\",\"enum\":[\"mean\"],\"description\":\"Statistic to report.\"},\"groupBy\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"level\",\"fn\",\"location\",\"tenureBand\",\"gender\",\"ethnicityBand\"]},\"description\":\"One or two dimensions to group by.\"},\"justification\":{\"type\":\"string\",\"description\":\"Why the smaller cohorts matter. Shown to the person deciding.\"}},\"required\":[\"metric\",\"stat\",\"justification\"]}",
+      "annotations": {
+        "readOnlyHint": false,
+        "untrustedContentHint": true
+      }
+    },
+    {
+      "name": "summarize_metric",
+      "keys": [
+        "description",
+        "inputSchema",
+        "name",
+        "annotations",
+        "origin",
+        "title",
+        "window"
+      ],
+      "description": "Reports a statistic for a metric across every cohort in a grouping, and renders it as a chart the person at the keyboard can see. Cohorts smaller than 20 people are marked withheld rather than reported. Group by gender or ethnicity alongside level or function to examine pay equity.",
+      "schema": "{\"type\":\"object\",\"properties\":{\"metric\":{\"type\":\"string\",\"enum\":[\"baseSalary\",\"bonusPct\",\"equityValue\"],\"description\":\"Which figure to measure.\"},\"stat\":{\"type\":\"string\",\"enum\":[\"mean\"],\"description\":\"Which statistic. Extremes and dispersion are not available.\"},\"groupBy\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"enum\":[\"level\",\"fn\",\"location\",\"tenureBand\",\"gender\",\"ethnicityBand\"]},\"description\":\"One or two dimensions to group by. Omit for a whole-company figure.\"}},\"required\":[\"metric\",\"stat\"]}",
+      "annotations": {
+        "readOnlyHint": true,
+        "untrustedContentHint": false
+      }
+    }
+  ],
+  "transcript": [
+    {
+      "tool": "describe_dataset",
+      "args": {},
+      "output": "{\"status\":\"ok\",\"rowCount\":5000,\"dimensions\":{\"level\":[\"L1\",\"L2\",\"L3\",\"L4\",\"L5\",\"L6\",\"L7\"],\"fn\":[\"Engineering\",\"Product\",\"Design\",\"Sales\",\"Marketing\",\"Support\",\"Operations\"],\"location\":[\"London\",\"Berlin\",\"Austin\",\"Toronto\",\"Bangalore\",\"Remote\"],\"tenureBand\":[\"<1y\",\"1-3y\",\"3-5y\",\"5y+\"],\"gender\":[\"Female\",\"Male\",\"Other/undisclosed\"],\"ethnicityBand\":[\"Group A\",\"Group B\",\"Group C\",\"Group D\",\"Undisclosed\"]},\"metrics\":{\"baseSalary\":\"Base salary (USD)\",\"bonusPct\":\"Bonus as a fraction of base\",\"equityValue\":\"Annual equity value (USD)\"},\"policy\":{\"countFloor\":5,\"numericFloor\":20,\"maxGroupByDepth\":2,\"exactCountFloor\":50},\"budget\":{\"charged\":0,\"remaining\":400}}"
+    },
+    {
+      "tool": "summarize_metric",
+      "args": {
+        "metric": "baseSalary",
+        "stat": "max"
+      },
+      "output": "{\"status\":\"refused\",\"code\":\"STAT_NOT_PERMITTED\",\"reason\":\"Policy: permitted statistics are count, mean.\",\"recovery\":\"Extremes and dispersion are not available at any cohort size. Use mean.\"}"
+    }
+  ]
+}
