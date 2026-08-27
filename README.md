@@ -275,7 +275,7 @@ output be attributed to an individual? — immediately before anything is releas
 
 Stated plainly, including what does not work.
 
-![Airlock mid-audit: aggregate charts on the left, the agent's verbatim tool returns on the right, and an append-only disclosure ledger showing refusals in red](artifacts/airlock-audit.png)
+![Airlock mid-audit. Across the top, the counterfactual: uploading this file would have sent 5,000 people, 882 kB and roughly 225,810 tokens — beside what was actually disclosed to the agent, which is 0 people and 98 aggregate values. Below, a bar chart of mean base salary by level and gender with three cohorts withheld as too small, the cell table listing a withheld cohort rather than hiding it, and the agent's verbatim tool return.](artifacts/airlock-audit.png)
 
 | Environment | Result |
 |---|---|

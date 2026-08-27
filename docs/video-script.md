@@ -40,13 +40,15 @@ currently tells a viewer which side is the agent and which is the page.
 ### 0:00 – 0:15 · Cold open, the refusal
 
 Screen: Airlock with the dataset already loaded and a chart visible, agent panel on the right,
-clearly labelled. In the agent panel, ask for the highest salary in the company. A red row lands in
-the ledger. The counter still reads **0**.
+clearly labelled. In the agent panel, ask for the highest salary in the company. A row lands in the
+ledger carrying a **red rule in its left margin** and **REFUSED** in black, followed by the policy
+code that caused it. The counter still reads **0**.
 
 > "That's an AI agent asking for the highest salary in a company's payroll. And that's the web
 > page telling it no."
 
-Beat. Let the red row sit on screen for a second.
+Beat. Let the refused row sit on screen for a second — long enough that the policy code is
+readable, because the code is what makes it a rule rather than a mood.
 
 ### 0:15 – 0:35 · The problem, and the counterfactual
 
@@ -110,7 +112,9 @@ outscores thirty seconds of chart tour.
 
 ### 2:10 – 2:25 · Hand the attacks to the viewer
 
-Screen: the **Try to break it** panel. Click **Run all**, let the verdicts land.
+Screen: the **Try to break it** panel — section 07, full width at the foot of the page, laid out as
+a two-column grid of cases. Click **Run all**, let the verdicts land. Refusals settle to grey with a
+red margin rule and a black **REFUSED** block; withheld results are hatched.
 
 > "You don't have to take my word for any of this. These are the same attacks the test suite runs,
 > so every outcome you see here is one a test asserts — including two that succeeded against an

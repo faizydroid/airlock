@@ -350,6 +350,9 @@ check('no employee identifier in the DOM', !domLeak.hasEmployeeId);
 /* ---- artifacts ---- */
 
 await page.setViewportSize({ width: 1600, height: 1000 });
+// Back to the top before the viewport shot. The `?attack=1` deep-link check scrolls the page and
+// that position persists, which had been cutting the masthead out of the README's hero image.
+await page.evaluate(() => window.scrollTo(0, 0));
 await page.waitForTimeout(400);
 await page.screenshot({ path: path.join(artifacts, 'airlock-audit.png'), fullPage: false });
 await page.screenshot({ path: path.join(artifacts, 'airlock-full.png'), fullPage: true });
