@@ -242,12 +242,32 @@ output be attributed to an individual? — immediately before anything is releas
 
 Stated plainly, including what does not work.
 
+![Airlock mid-audit: aggregate charts on the left, the agent's verbatim tool returns on the right, and an append-only disclosure ledger showing refusals in red](artifacts/airlock-audit.png)
+
 | Environment | Result |
 |---|---|
-| Chrome 149+ with `chrome://flags/#enable-webmcp-testing` | **Works.** Tools register, `toolchange` fires, `getTools`/`executeTool` live. |
+| **Chrome 151 with WebMCP enabled** | **Verified.** `document.modelContext` present; 2 tools registered before a dataset exists, 8 after; refusals surfaced with policy codes. 27 automated browser checks — run `npm run verify:browser`. |
+| Chrome 149+ with `chrome://flags/#enable-webmcp-testing` | Same path as above; the flag is the manual equivalent of the launch switch. |
 | Chrome without the flag, origin-trial token served | **Does not work.** See below. |
 | ChatGPT desktop built-in browser | **Does not work.** Requires an authorised origin we could not obtain. |
 | Any browser, no WebMCP | **The UI and Replay work.** The full audit narrative is one click away. |
+
+### Automated browser verification
+
+`npm run verify:browser` launches your installed Chrome with `--enable-features=WebMCP`, serves the
+production build over a secure context, and asserts 27 properties that only a browser can answer.
+Everything else in the test suite runs in Node against the kernel, so this is what closes the gap
+between "the logic is correct" and "the application works".
+
+It checks, among other things: that the app renders with no console errors; that
+`document.modelContext` exists and the tools register; **that the registered tool count changes as
+application state advances**, which is the dynamic-registration evidence; that replay drives the
+real handlers and produces genuine refusals carrying policy codes; that the canvas actually paints;
+that the counter still reads zero after a full audit; that the exported report contains the ledger
+and the limitations; and — the strongest browser-side check available — **that no unquantized
+currency figure and no employee identifier appears anywhere in the rendered DOM.**
+
+Screenshots and a sample exported report land in `artifacts/`.
 
 We registered two origins for the WebMCP origin trial and served both tokens as `<meta>` tags and
 as repeated `Origin-Trial` response headers. Chrome rejected both with the flag disabled. The

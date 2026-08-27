@@ -50,7 +50,7 @@ export function App() {
       <header className="bar">
         <div className="brand">
           Airlock
-          <span>your agent analyses a file it never sees</span>
+          <span>your agent analyses data it never sees</span>
         </div>
 
         <div className="meter">

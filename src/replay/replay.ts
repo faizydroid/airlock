@@ -136,7 +136,16 @@ const SCRIPT: Step[] = [
     tool: 'get_audit_report',
     input: {},
     caption: 'The artifact: every question asked, every question refused. Records released: zero.',
-    pause: 800
+    pause: 1200
+  },
+  {
+    // Ends on the chart that tells the story rather than on the last refusal's empty result.
+    // A viewer arriving at the end of the replay — or a screenshot taken there — should see the
+    // finding, not the debris of the exfiltration attempts.
+    tool: 'summarize_metric',
+    input: { metric: 'baseSalary', stat: 'mean', groupBy: ['level', 'gender'] },
+    caption: 'Back to the finding. Every bar is a cohort of at least twenty people.',
+    pause: 900
   }
 ];
 
