@@ -1,6 +1,6 @@
 # Pay equity audit
 
-Generated 2026-08-27T17:16:16.649Z
+Generated 2026-08-27T20:30:47.077Z
 
 Dataset: 5,000 records. Synthetic, generated in-browser from a fixed seed. No real personal data.
 
@@ -28,7 +28,7 @@ Dataset: 5,000 records. Synthetic, generated in-browser from a fixed seed. No re
 
 ### Unexplained pay gap concentrated in Engineering and Sales
 
-**critical** — 2026-08-27T17:15:59.685Z
+**critical** — 2026-08-27T20:30:30.206Z
 
 The company-wide raw gap is largely composition: women are under-represented at senior levels. After stratifying by level and function, most functions sit near parity. Engineering and Sales do not, and the gap widens with seniority.
 
@@ -48,7 +48,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
 [
   {
     "seq": 1,
-    "at": "2026-08-27T17:15:49.522Z",
+    "at": "2026-08-27T20:30:19.994Z",
     "op": "load_sample",
     "spec": {},
     "outcome": "ok",
@@ -57,7 +57,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 2,
-    "at": "2026-08-27T17:15:49.522Z",
+    "at": "2026-08-27T20:30:19.994Z",
     "op": "profile",
     "spec": {},
     "outcome": "ok",
@@ -66,7 +66,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 3,
-    "at": "2026-08-27T17:15:50.428Z",
+    "at": "2026-08-27T20:30:20.904Z",
     "op": "profile",
     "spec": {},
     "outcome": "ok",
@@ -75,7 +75,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 4,
-    "at": "2026-08-27T17:15:51.538Z",
+    "at": "2026-08-27T20:30:22.021Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -90,7 +90,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 5,
-    "at": "2026-08-27T17:15:53.354Z",
+    "at": "2026-08-27T20:30:23.842Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -106,7 +106,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 6,
-    "at": "2026-08-27T17:15:55.366Z",
+    "at": "2026-08-27T20:30:25.867Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -122,7 +122,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 7,
-    "at": "2026-08-27T17:15:57.280Z",
+    "at": "2026-08-27T20:30:27.789Z",
     "op": "adjusted_gap",
     "spec": {
       "metric": "baseSalary",
@@ -139,7 +139,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 8,
-    "at": "2026-08-27T17:16:01.400Z",
+    "at": "2026-08-27T20:30:31.930Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -155,7 +155,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 9,
-    "at": "2026-08-27T17:16:03.511Z",
+    "at": "2026-08-27T20:30:34.049Z",
     "op": "aggregate",
     "spec": {
       "stat": "median",
@@ -171,7 +171,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 10,
-    "at": "2026-08-27T17:16:05.821Z",
+    "at": "2026-08-27T20:30:36.369Z",
     "op": "aggregate",
     "spec": {
       "stat": "max",
@@ -185,7 +185,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 11,
-    "at": "2026-08-27T17:16:08.126Z",
+    "at": "2026-08-27T20:30:38.677Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -203,7 +203,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 12,
-    "at": "2026-08-27T17:16:10.430Z",
+    "at": "2026-08-27T20:30:40.996Z",
     "op": "profile",
     "spec": {},
     "outcome": "ok",
@@ -212,7 +212,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 13,
-    "at": "2026-08-27T17:16:11.641Z",
+    "at": "2026-08-27T20:30:42.226Z",
     "op": "aggregate",
     "spec": {
       "stat": "mean",
@@ -228,7 +228,7 @@ Provenance: `{"stat":"mean","metric":"baseSalary","groupBy":["fn","gender"]}`
   },
   {
     "seq": 14,
-    "at": "2026-08-27T17:16:16.649Z",
+    "at": "2026-08-27T20:30:47.077Z",
     "op": "profile",
     "spec": {},
     "outcome": "ok",

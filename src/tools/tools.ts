@@ -111,7 +111,8 @@ const analysisTools: ToolDef[] = [
       'Reports a statistic for a metric across every cohort in a grouping, and renders it as a '
       + 'chart the person at the keyboard can see. Cohorts smaller than '
       + `${N_NUMERIC_FLOOR} people are marked withheld rather than reported. Group by gender or `
-      + 'ethnicity alongside level or function to examine pay equity.',
+      + 'ethnicity alongside level or function to examine pay equity. Grouping by two dimensions at '
+      + 'once is how you locate where a gap concentrates, which a single adjusted average hides.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -144,11 +145,28 @@ const analysisTools: ToolDef[] = [
   },
   {
     name: 'adjusted_pay_gap',
+    /**
+     * The warning in the second half of this description is not decoration.
+     *
+     * A real model (claude-haiku-4-5, via `scripts/agent-session.mjs`) audited the dataset with the
+     * previous wording, controlled for level and function, got 0.5%, and recorded a finding saying
+     * the gap was negligible. The dataset has a deliberate 7.5% penalty concentrated in Engineering
+     * and Sales at L5-L7; 0.5% is the noise floor the generator plants everywhere else. The model
+     * was not careless — it was reading a single equal-weighted average across ~49 strata, in which
+     * a gap living in ~6 of them is arithmetically invisible.
+     *
+     * The tool could not express "the gap inside Engineering", and nothing told the model to go
+     * looking. Adding a `within` filter would open a cohort-narrowing surface (attack A7) and
+     * returning per-stratum figures would leak n, so the fix is the honest one: the tool states its
+     * own blind spot and names the tool that covers it.
+     */
     description:
       'Reports the pay gap for each group against a reference group, comparing only within '
-      + 'matching strata so composition cannot distort it. This is the tool to use for equity '
-      + 'work: a raw gap by function is dominated by who sits at which level. Returns one '
-      + 'percentage per group. Positive means that group earns less than the reference.',
+      + 'matching strata so composition cannot distort it. Returns one percentage per group; '
+      + 'positive means that group earns less. This averages every stratum equally, so a gap '
+      + 'concentrated in a few functions or levels is diluted here and can look negligible. A small '
+      + 'number is not evidence of equity: also call summarize_metric grouped by this dimension '
+      + 'alongside fn or level to find where a gap actually sits.',
     inputSchema: {
       type: 'object',
       properties: {
