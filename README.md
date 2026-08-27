@@ -31,6 +31,8 @@ A bare zero is decoration. A zero beside 5,000 is a measurement.
 
 Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
 
+**157 tests · 42 browser checks · zero network requests after load · no server**
+
 **Scope, stated up front:** this build generates its dataset rather than importing one. There is no
 file upload path. The privacy machinery is real and tested; the ingestion story is not built. See
 [Tested environments](#tested-environments) and [What this does not protect against](#what-this-does-not-protect-against).
@@ -360,6 +362,23 @@ gap would be findable in one query and implausibly large across 5,000 people.
 Minimum-N suppression is not invented for this demo. Compensation benchmarking suppresses bands
 below a headcount floor, and statutory pay-gap reporting does the same. The floors here implement
 an existing professional standard.
+
+## Platform research
+
+`probe/` is not part of the app. It is the harness used to work out how WebMCP actually behaves,
+because several published details turned out to be wrong or stale.
+
+Findings are recorded verbatim in [`NOTES.md`](NOTES.md), including: `toolchange` fires once per
+registration; `navigator.modelContext` still exists in Chrome 151 as an undocumented alias;
+`requestUserInteraction()` does **not** exist, having been removed from the spec in June 2026
+while Chrome's own security page still links to it; a thrown error's message is discarded by the
+platform, so refusals must be return values; and registering a duplicate tool name rejects rather
+than replacing.
+
+It also contains the full record of the origin-trial investigation — two registrations, both
+rejected, hypothesis falsified, cause recorded as unknown rather than guessed at.
+
+Run it with `npm run probe`.
 
 ## Licence
 

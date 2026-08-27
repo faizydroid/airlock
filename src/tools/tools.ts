@@ -347,21 +347,44 @@ let syncing = false;
  * Called after every tool invocation and on every UI action, so the agent's available tools
  * always describe what is currently possible. Each transition fires `toolchange`.
  */
+let pendingSync = false;
+
+/**
+ * Brings registration in line with application state.
+ *
+ * Called after every tool invocation and on every UI action, so the agent's available tools always
+ * describe what is currently possible. Each transition fires `toolchange`.
+ *
+ * The re-entrancy handling matters more than it looks. An earlier version returned immediately if a
+ * sync was already running, which silently dropped the concurrent request — and because `traced()`
+ * calls this after every tool return, a `request_threshold_override` landing mid-sync could fail to
+ * register `check_override_request`, the one tool the human-approval flow depends on. Now a request
+ * arriving during a sync sets a flag and runs afterwards, so the final state is always correct.
+ */
 export function syncRegistration(): void {
-  if (syncing) return;
+  if (syncing) {
+    pendingSync = true;
+    return;
+  }
   syncing = true;
+
   void (async () => {
     try {
-      await registry.ensure('base', baseTools);
+      do {
+        pendingSync = false;
 
-      if (store.kernel.loaded) await registry.ensure('analysis', analysisTools);
-      else registry.withdraw('analysis', ANALYSIS_NAMES);
+        await registry.ensure('base', baseTools);
 
-      // Expire first, so a stale request cannot keep the polling tool registered indefinitely.
-      store.expireStaleOverrides();
-      const anyPending = store.overrides.some((o) => o.status === 'pending');
-      if (anyPending) await registry.ensure('override', overrideTools);
-      else registry.withdraw('override', OVERRIDE_NAMES);
+        if (store.kernel.loaded) await registry.ensure('analysis', analysisTools);
+        else registry.withdraw('analysis', ANALYSIS_NAMES);
+
+        // Expire first, so a stale request cannot keep the polling tool registered indefinitely.
+        store.expireStaleOverrides();
+        const anyPending = store.overrides.some((o) => o.status === 'pending');
+        if (anyPending) await registry.ensure('override', overrideTools);
+        else registry.withdraw('override', OVERRIDE_NAMES);
+        // Loop again if state changed while we were awaiting, rather than dropping the request.
+      } while (pendingSync);
     } finally {
       syncing = false;
       store.notify();

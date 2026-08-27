@@ -23,7 +23,7 @@ layer with no setup. Tested-environment matrix is in the README, including what 
 
 ## Repository
 
-_(add URL)_ — MIT licensed.
+https://github.com/faizydroid/airlock — MIT licensed.
 
 ---
 
