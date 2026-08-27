@@ -16,6 +16,26 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23000' stroke-width='4'/%3E%3Crect x='14' y='0' width='4' height='32' fill='%23fff'/%3E%3Crect x='0' y='0' width='6' height='6' fill='%23FF3000'/%3E%3C/svg%3E">
 <!-- Matches the white masthead. -->
 <meta name="theme-color" content="#ffffff">
+
+<!--
+  Social card. Without these a shared link unfurls as bare text, which wastes the one asset this
+  project has: a screenshot whose whole argument is legible at a glance.
+
+  This does NOT weaken "zero network requests after load". `og:image` is fetched by crawlers when a
+  link is unfurled, never by a visitor's browser rendering the page, so nothing here adds a request
+  to the page load. The favicon stays a data URI for exactly that reason; this is a different case.
+-->
+<link rel="canonical" href="https://airlock.dofolabs.space/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://airlock.dofolabs.space/">
+<meta property="og:site_name" content="Airlock">
+<meta property="og:title" content="Airlock — your agent analyses data it never sees">
+<meta property="og:description" content="An AI agent audits 5,000 compensation records for pay inequity through WebMCP tools and receives zero individual records. No server, no upload, and a ledger of every question it was refused.">
+<meta property="og:image" content="https://airlock.dofolabs.space/og.png">
+<meta property="og:image:width" content="1600">
+<meta property="og:image:height" content="1000">
+<meta property="og:image:alt" content="Uploading this file would have sent 5,000 people. Actually disclosed to the agent: 0 people, 98 aggregate values.">
+<meta name="twitter:card" content="summary_large_image">
 <title>Airlock — your agent analyses data it never sees</title>
 <meta name="description" content="5,000 compensation records are generated in this tab and stay there. Your AI agent audits them through a bounded, budgeted, fully audited WebMCP tool interface, and never receives an individual record.">
 </head>
