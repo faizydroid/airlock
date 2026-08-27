@@ -3,7 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "A browser tab where your agent analyses a file it never sees.",
+  "description": "A browser tab where your agent analyses data it never sees.",
+  "homepage": "https://airlock.dofolabs.space",
+  "repository": { "type": "git", "url": "https://github.com/faizydroid/airlock.git" },
   "license": "MIT",
   "scripts": {
     "dev": "vite",
@@ -18,7 +20,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run test"
+    "verify:secrets": "node scripts/check-no-secrets.mjs",
+    "verify": "npm run typecheck && npm run test",
+    "verify:all": "npm run typecheck && npm run test && npm run verify:secrets && npm run verify:browser && npm run verify:live"
   },
   "dependencies": {
     "react": "19.0.0",
