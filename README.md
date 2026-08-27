@@ -31,7 +31,7 @@ A bare zero is decoration. A zero beside 5,000 is a measurement.
 
 Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
 
-**157 tests · 42 browser checks · zero network requests after load · no server**
+**166 tests · 42 browser checks · zero network requests after load · no server**
 
 **Scope, stated up front:** this build generates its dataset rather than importing one. There is no
 file upload path. The privacy machinery is real and tested; the ingestion story is not built. See
@@ -63,23 +63,45 @@ who owns that data watches the analysis happen and holds a veto.
 
 Concretely, during the demo session:
 
-1. The agent asks for the company-wide pay gap and gets a large number — which is **misleading**,
-   because most of it is composition rather than pay. Women are under-represented at senior
-   levels in this dataset.
+1. The agent asks for the company-wide pay gap and gets a large number — about **10.5%** — which is
+   **misleading**, because most of it is composition rather than pay. Women are under-represented at
+   senior levels in this dataset.
 2. It controls for level. The gap narrows sharply.
-3. It segments by function and finds the real signal: an unexplained gap concentrated in
-   Engineering and Sales, widening with seniority.
-4. It records a finding, which appears in the human's report for review.
-5. It tries to narrow further, into cohorts of a handful of people, and is **refused**.
-6. It asks for the highest salary in the company, and is **refused** on a policy it cannot argue
-   with.
+3. It looks by function. Several functions show double-digit raw gaps — largest in Sales,
+   Engineering and Support — but this view does not control for level mix *inside* a function, so it
+   misleads in the opposite direction.
+4. It compares only within matching level-and-function strata. The gap collapses to roughly
+   **1.5%**.
+5. It tries the one query that would separate a real penalty from level composition inside a single
+   function — gender by function by level — and is **refused**. Three dimensions is cohort
+   narrowing, and the policy will not have it.
+6. It records a finding that says what the evidence supports and names what it cannot establish:
+   these functions are candidates for escalation, not a verdict.
+7. It asks for the highest salary, and for a median. Both **refused** at any cohort size.
 
 Throughout, the counter at the top of the page reads **0 individual records disclosed**, and the
-ledger at the bottom records every question asked and every question refused.
+ledger records every question asked and every question refused.
 
-That Simpson's-paradox trap in steps 1–3 is real, not staged: it is asserted by a test, so an
-agent that fails to control for level genuinely reports a gap in functions that are actually at
-parity.
+### The honest part of that narrative
+
+The trap in steps 1–4 is real, not staged, and it cuts both ways. `src/data/generate.test.ts`
+asserts both halves over the raw rows: functions other than Engineering and Sales sit at parity once
+level is controlled, yet their *unadjusted* gaps look alarming. Support is the clearest case — it
+carries no planted penalty at all, and still shows an 11.8% raw gap purely from level composition.
+
+So an agent that stops at step 3 over-reports. An agent that stops at step 4 under-reports, because
+a penalty concentrated in about 6 of ~49 strata is arithmetically invisible in one equal-weighted
+average.
+
+**And the tool surface cannot resolve it.** The fixture does contain a real penalty in Engineering
+and Sales that survives level control — the generator plants it and a test proves it — but proving
+that through the tools would need the depth-3 query step 5 refuses. That is not a gap in the
+implementation; it is the privacy/utility tradeoff this project is about, made visible instead of
+argued away. The audit's output is a precise next question for someone with lawful record access.
+
+This was found by running a live model against the tools rather than by reasoning about them:
+`artifacts/agent-session.md` is the transcript, and an earlier version of this section claimed the
+agent isolates the concentrated gap. It cannot, so the claim is gone.
 
 ---
 
@@ -323,7 +345,7 @@ calls the same `execute` handler an agent would call. It is not a video and not 
 
 ```bash
 npm install
-npm run verify        # typecheck + 146 tests, including the adversarial and regression suites
+npm run verify        # typecheck + 166 tests, including the adversarial and regression suites
 npm run dev           # http://localhost:5173
 npm run build
 npm run verify:egress # asserts the shipped bundle contains no network primitives

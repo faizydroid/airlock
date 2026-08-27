@@ -73,20 +73,32 @@ data watches and holds a veto.
 
 The demo session shows why that is more than a slogan:
 
-1. The agent asks for the company-wide pay gap. It gets a large number — which is **wrong**, or at
-   least badly misleading. Most of it is composition, not pay: women are under-represented at
-   senior levels in this dataset.
+1. The agent asks for the company-wide pay gap. It gets about **10.5%** — which is **badly
+   misleading**. Most of it is composition, not pay: women are under-represented at senior levels in
+   this dataset.
 2. It controls for level. The gap collapses.
-3. It segments by function and finds the real signal: an unexplained gap concentrated in
-   Engineering and Sales, widening with seniority.
-4. It records a finding, which lands in the human's report for review.
-5. It tries to narrow into cohorts of a handful of people and is **refused**.
-6. It asks for the highest salary in the company and is **refused**.
+3. It looks by function. Sales, Engineering and Support all show double-digit raw gaps — but this
+   view doesn't control for level mix *inside* a function, so it misleads in the other direction.
+4. It compares only within matching level-and-function strata. The gap drops to roughly **1.5%**.
+5. It tries the one query that would tell the two apart — gender by function by level — and is
+   **refused**. Three dimensions is cohort narrowing.
+6. It records a finding that states what the evidence supports and names what it cannot establish.
+7. It asks for the highest salary, and for a median. Both **refused** at any cohort size.
 
-That Simpson's-paradox trap in steps 1–3 is real, not staged — it's pinned by a test. An agent that
-fails to control for level genuinely reports a gap in functions that are at parity. Human judgment
-about *which question to ask* still matters, which is the honest version of human-agent
-collaboration.
+The trap in steps 1–4 is real, not staged, and it's pinned by tests that run over the raw rows.
+Functions other than Engineering and Sales sit at parity once level is controlled, yet their
+unadjusted gaps look alarming: Support carries no planted penalty and still shows an 11.8% raw gap
+from level composition alone.
+
+The part worth reading twice is step 5. The fixture *does* contain a real penalty in Engineering and
+Sales that survives level control — the generator plants it and `generate.test.ts` proves it — and
+the tool surface still cannot demonstrate that, because doing so requires the depth-3 query the
+policy refuses. So the audit ends by handing the human a precise question rather than a verdict.
+
+That is the honest version of human–agent collaboration on private data: the agent does the
+statistical work, the boundary decides how far it can go, and the human is told exactly where the
+analysis stopped and why. We found this by running a live model against the tools — transcript in
+`artifacts/agent-session.md` — and it changed the claim we were going to make.
 
 ## How we implemented WebMCP
 

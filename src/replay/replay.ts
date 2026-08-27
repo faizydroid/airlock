@@ -47,8 +47,22 @@ export function isReplaying(): boolean {
 /**
  * The session.
  *
- * Beats 3 to 6 are the substance: a naive question that misleads, a control that reveals why,
- * and a stratified view that finally isolates the signal. Beats 7 to 9 are the boundary refusing.
+ * Beats 3 to 6 are the substance: a naive question that misleads, a control that shows why, a raw
+ * by-function view that misleads differently, and a stratified comparison that collapses the gap.
+ * Beat 7 is the wall — the one query that would separate a real penalty from level mix inside a
+ * single function, refused because it is three dimensions deep. Beat 8 records what can honestly be
+ * concluded given that refusal. Beats 9 to 12 are the boundary refusing on other axes.
+ *
+ * An earlier version of beat 8 asserted an "unexplained gap concentrated in Engineering and Sales,
+ * widening with seniority". That is true of the fixture — `generate.test.ts` proves it over the raw
+ * rows — but it is NOT derivable from anything beats 3 to 6 disclose. The by-function view puts
+ * Support within a point of Engineering purely through level composition, and the stratified average
+ * dilutes the real penalty to about 1.5% across ~49 strata. A live model read exactly that evidence
+ * and concluded "compositional", which was the reasonable reading.
+ *
+ * So the finding now says what the tools support and names what it cannot establish. That is the
+ * product's actual thesis: the boundary has an analytical cost, and the honest move is to hand the
+ * human a precise next question rather than a verdict the data cannot carry.
  */
 const SCRIPT: Step[] = [
   {
@@ -95,16 +109,35 @@ const SCRIPT: Step[] = [
     pause: 2400
   },
   {
+    // The wall, and the most important beat in the script. This is not an arbitrary depth probe:
+    // gender by function by level is precisely the query that would separate a real pay penalty
+    // from level composition inside one function. It is refused, so the audit cannot certify which
+    // of the by-function residuals are real — which is what the finding below has to say.
+    tool: 'summarize_metric',
+    input: { metric: 'baseSalary', stat: 'mean', groupBy: ['fn', 'level', 'gender'] },
+    caption:
+      'The one query that would separate a real penalty from level mix inside a function. '
+      + 'Three dimensions deep, so it is refused before it runs.',
+    pause: 2300
+  },
+  {
     tool: 'record_finding',
     input: {
-      title: 'Unexplained pay gap concentrated in Engineering and Sales',
+      title: 'Residual gap in the highest-paying functions, not decomposable here',
       detail:
-        'The company-wide raw gap is largely composition: women are under-represented at senior '
-        + 'levels. After stratifying by level and function, most functions sit near parity. '
-        + 'Engineering and Sales do not, and the gap widens with seniority.',
+        'The raw company-wide gap is largely composition: women are under-represented at senior '
+        + 'levels. Comparing only within matching level-and-function strata collapses it to roughly '
+        + '1.5%. The raw by-function view still shows double-digit gaps in Sales, Engineering and '
+        + 'Support — but that view does not control for level mix inside a function, and the query '
+        + 'that would separate the two needs gender by function by level, which the policy refuses '
+        + 'as cohort narrowing. These functions are candidates for escalation to someone with lawful '
+        + 'record access. This analysis cannot certify which of them are real.',
+      // Critical describes the urgency of escalating an unexplained double-digit gap on a protected
+      // characteristic in the two highest-paid functions. It does not claim causation, and the detail
+      // above is explicit that causation is exactly what could not be established.
       severity: 'critical'
     },
-    caption: 'Recording the finding for the human to review, keep or discard.',
+    caption: 'Recording what the evidence supports — and naming what it cannot establish.',
     pause: 1700
   },
   {
@@ -126,12 +159,7 @@ const SCRIPT: Step[] = [
     caption: 'Asking for the highest salary in the company. Refused.',
     pause: 2300
   },
-  {
-    tool: 'summarize_metric',
-    input: { metric: 'baseSalary', stat: 'mean', groupBy: ['level', 'location', 'gender'] },
-    caption: 'Three dimensions at once. Refused before it runs.',
-    pause: 2300
-  },
+
   {
     tool: 'get_audit_report',
     input: {},

@@ -288,3 +288,79 @@ describe('snapshot caching', () => {
     expect(store.kernel.getLedger().length).toBe(before);
   });
 });
+
+/**
+ * The figures quoted in prose.
+ *
+ * README.md and docs/submission.md now cite concrete numbers — a ~10.5% raw company gap, ~1.5%
+ * after stratifying by level and function, and an 11.8% raw gap in Support, a function planted at
+ * parity. Published numbers that nothing checks are how documentation drifts away from the build,
+ * and this project's stated principle is that a claim which stops being true should break something.
+ *
+ * Tolerances are deliberately loose enough to survive incidental generator noise and tight enough
+ * that the narrative would fail if the shape of the fixture changed.
+ */
+describe('figures cited in the README and submission', () => {
+  const gapOf = (cells: { group: Record<string, string>; value?: number }[], key: string, dim: string) => {
+    const f = cells.find((c) => c.group[dim] === key && c.group.gender === 'Female')?.value;
+    const m = cells.find((c) => c.group[dim] === key && c.group.gender === 'Male')?.value;
+    if (f === undefined || m === undefined) return null;
+    return (m - f) / m;
+  };
+
+  it('the raw company-wide gap is about 10.5%', () => {
+    store.loadDataset();
+    const r = store.kernel.aggregate({ stat: 'mean', metric: 'baseSalary', groupBy: ['gender'] }) as {
+      cells: { group: Record<string, string>; value?: number }[];
+    };
+    const female = r.cells.find((c) => c.group.gender === 'Female')!.value!;
+    const male = r.cells.find((c) => c.group.gender === 'Male')!.value!;
+    const gap = (male - female) / male;
+    expect(gap).toBeGreaterThan(0.09);
+    expect(gap).toBeLessThan(0.12);
+  });
+
+  it('stratifying by level and function collapses it to roughly 1.5%', () => {
+    store.loadDataset();
+    const out = store.kernel.adjustedGap({
+      metric: 'baseSalary',
+      dimension: 'gender',
+      reference: 'Male',
+      controlFor: ['level', 'fn']
+    }) as { status: string; results: { group: string; gapPct: number | null }[] };
+
+    expect(out.status).toBe('ok');
+    const female = out.results.find((r) => r.group === 'Female');
+    // `gapPct` is percentage POINTS, quantized to half a point — so ~1.5, not ~0.015.
+    expect(female?.gapPct, 'the Female stratified gap must be reportable').not.toBeNull();
+    // The point of this number is that it reads as "nothing to see", which is exactly why a live
+    // model concluded the gap was negligible. It must stay small for that narrative to hold.
+    expect(Math.abs(female!.gapPct!)).toBeLessThan(3.5);
+  });
+
+  /**
+   * The counter-example that makes the narrative honest. Support carries no planted penalty — the
+   * generator gives it 0.995, its noise floor — yet its raw by-function gap is large enough to look
+   * like a finding. If this ever drops to near zero, the "misleads in both directions" claim in the
+   * README is no longer true and the prose has to change with it.
+   */
+  it('Support shows a large raw gap despite being planted at parity', () => {
+    store.loadDataset();
+    const r = store.kernel.aggregate({
+      stat: 'mean',
+      metric: 'baseSalary',
+      groupBy: ['fn', 'gender']
+    }) as { cells: { group: Record<string, string>; value?: number }[] };
+
+    const support = gapOf(r.cells, 'Support', 'fn');
+    expect(support, 'Support must be reportable at this depth').not.toBeNull();
+    expect(support!).toBeGreaterThan(0.08);
+
+    // And it must be close enough to the genuinely affected functions that no agent could tell them
+    // apart from this view alone. That indistinguishability is the whole reason the depth-3 query
+    // matters, and the reason the recorded finding refuses to name a cause.
+    const engineering = gapOf(r.cells, 'Engineering', 'fn');
+    expect(engineering).not.toBeNull();
+    expect(Math.abs(engineering! - support!)).toBeLessThan(0.06);
+  });
+});

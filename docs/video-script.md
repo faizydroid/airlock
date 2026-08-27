@@ -82,12 +82,27 @@ This is the longest section and it carries the WebMCP-leverage score. Keep the r
    > "Most of that wasn't pay. It was composition — women are under-represented at senior levels.
    > An agent that ran one query would have reported a gap that isn't there."
 
-4. Agent segments by function. Engineering and Sales separate from the rest.
+4. Agent looks by function. Sales, Engineering **and Support** all show double-digit gaps.
 
-   > "There's the real signal. Concentrated in two functions, widening with seniority, and not
-   > explained by level, location or tenure."
+   > "Now it looks like three functions have a problem. Support doesn't — it's at parity, and that
+   > eleven percent is level composition again. The raw view misleads in both directions."
 
-5. Agent calls `record_finding`. It appears in the human's report.
+5. Agent stratifies by level and function. The gap collapses to about 1.5%.
+
+6. **The wall.** Agent asks for gender by function by level — the one query that would separate a
+   real penalty from level mix inside a single function. **Refused: three dimensions.**
+
+   > "That's the query that would settle it. Three dimensions is how you narrow toward one person,
+   > so the policy refuses it. Which means this audit cannot tell you whether Engineering's gap is
+   > real."
+
+   Hold on the refused row. This is the honest centre of the whole demo — do not cut it.
+
+7. Agent calls `record_finding`. It records the candidates and states what it could not establish.
+
+   > "So it hands back a question instead of a verdict: escalate these two functions to someone with
+   > lawful access to the records. That's what a boundary costs, and pretending otherwise would be
+   > the dishonest version of this demo."
 
 Emphasise the process, not the conclusion. Showing the *path* is more convincing than showing the
 answer, and it doubles as the evidence that the tool layer is doing real work.

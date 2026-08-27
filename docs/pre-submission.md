@@ -16,7 +16,7 @@ npm run verify:all
 | Check | Command | Status |
 |---|---|---|
 | Typecheck | `npm run typecheck` | clean |
-| 157 unit, invariant, adversarial and regression tests | `npm test` | passing |
+| 166 unit, invariant, adversarial and regression tests | `npm test` | passing |
 | No network primitive in the shipped bundle | `npm run verify:egress` | passing |
 | 42 browser checks in real Chrome with WebMCP live | `npm run verify:browser` | passing |
 | Deployed site serves tokens and the current build | `npm run verify:live` | passing |
