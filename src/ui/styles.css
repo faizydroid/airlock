@@ -239,6 +239,8 @@ header.bar {
 /* Massive, tight, uppercase — type as the primary graphical element. The red block is the identity
    mark: a functional signal, not an ornament. */
 .brand {
+  /* It is an h1, so the UA margin has to go. */
+  margin: 0;
   font-size: clamp(26px, 3.4vw, 38px);
   font-weight: 900;
   line-height: 0.9;

@@ -79,10 +79,12 @@ export function App() {
   return (
     <div className="app">
       <header className="bar">
-        <div className="brand">
+        {/* An h1, not a div. The page had six h2s and no top-level heading, so anyone navigating by
+            heading landed straight in the middle of the document with no root to orient against. */}
+        <h1 className="brand">
           Airlock
           <span>your agent analyses data it never sees</span>
-        </div>
+        </h1>
 
         <div className="meter">
           <label>

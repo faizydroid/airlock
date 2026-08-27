@@ -46,14 +46,40 @@ const MIME = {
   '.json': 'application/json'
 };
 
-// Mirrors the deployed _headers file so the tokens are delivered the same way in both places.
+/**
+ * Mirrors the deployed `_headers` file — all of it, not just the tokens.
+ *
+ * This used to forward only `Origin-Trial`, which meant the Content-Security-Policy shipped to
+ * production was never exercised by any check. A CSP that breaks the app is exactly the kind of
+ * fault that passes every local test and then only appears on the live site, so the policy is now
+ * served here too and CSP violations are treated as failures further down.
+ */
 const headerLines = fs.existsSync(path.join(dist, '_headers'))
   ? fs.readFileSync(path.join(dist, '_headers'), 'utf8').split(/\r?\n/)
   : [];
-const originTrials = headerLines
-  .map((l) => l.trim())
-  .filter((l) => l.startsWith('Origin-Trial:'))
-  .map((l) => l.slice('Origin-Trial:'.length).trim());
+
+const originTrials = [];
+const mirroredHeaders = {};
+{
+  // Only the global `/*` block. The file also carries a `/assets/*` block whose immutable
+  // Cache-Control must not be hoisted onto index.html, which is what a naive line scan did.
+  let inGlobalBlock = false;
+  for (const line of headerLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    if (trimmed.startsWith('/')) {
+      inGlobalBlock = trimmed === '/*';
+      continue;
+    }
+    if (!inGlobalBlock) continue;
+    const i = trimmed.indexOf(':');
+    if (i < 1) continue;
+    const name = trimmed.slice(0, i).trim();
+    const value = trimmed.slice(i + 1).trim();
+    if (name.toLowerCase() === 'origin-trial') originTrials.push(value);
+    else mirroredHeaders[name] = value;
+  }
+}
 
 const server = http.createServer((req, res) => {
   const rel = (req.url ?? '/').split('?')[0];
@@ -66,7 +92,8 @@ const server = http.createServer((req, res) => {
   }
   const headers = {
     'Content-Type': MIME[path.extname(full)] ?? 'application/octet-stream',
-    'Cache-Control': 'no-store'
+    'Cache-Control': 'no-store',
+    ...mirroredHeaders
   };
   if (originTrials.length) headers['Origin-Trial'] = originTrials.join(', ');
   res.writeHead(200, headers).end(fs.readFileSync(full));
@@ -131,6 +158,38 @@ const rootHtml = await page.locator('#root').innerHTML();
 check('React root renders', rootHtml.length > 500, `${rootHtml.length} chars`);
 check('no uncaught page errors', pageErrors.length === 0, pageErrors.join(' | ').slice(0, 300));
 check('no console errors', consoleErrors.length === 0, consoleErrors.join(' | ').slice(0, 300));
+
+/* ---- the Content-Security-Policy must be served, and must not break the app ---- */
+
+if (mirroredHeaders['Content-Security-Policy']) {
+  const csp = mirroredHeaders['Content-Security-Policy'];
+  check(
+    'CSP forbids all network egress',
+    /connect-src\s+'none'/.test(csp),
+    "connect-src 'none' is what makes the no-egress claim enforced rather than asserted"
+  );
+  check('CSP defaults to deny', /default-src\s+'none'/.test(csp));
+  check('CSP forbids framing', /frame-ancestors\s+'none'/.test(csp));
+
+  // Chrome reports a blocked resource as a console error containing this phrase. Any hit means the
+  // policy is breaking something the app legitimately needs.
+  const violations = consoleErrors.filter((e) => /Content Security Policy/i.test(e));
+  check(
+    'the CSP blocks nothing the app needs',
+    violations.length === 0,
+    violations.join(' | ').slice(0, 300)
+  );
+
+  // The inlined font is the resource most likely to be caught by a font-src mistake, and a silent
+  // fallback to Arial would be easy to miss in a screenshot.
+  const fontLoaded = await page.evaluate(async () => {
+    await document.fonts.ready;
+    return document.fonts.check('700 14px Inter');
+  });
+  check('the inlined font still loads under CSP', fontLoaded);
+} else {
+  check('a Content-Security-Policy is served', false, 'no CSP found in dist/_headers');
+}
 
 check('brand visible', await page.getByText('Airlock').first().isVisible());
 

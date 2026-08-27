@@ -26,8 +26,9 @@
     "test:watch": "vitest",
     "typecheck": "tsc --noEmit",
     "verify:secrets": "node scripts/check-no-secrets.mjs",
+    "verify:a11y": "node scripts/verify-a11y.mjs",
     "verify": "npm run typecheck && npm run test",
-    "verify:all": "npm run typecheck && npm run test && npm run verify:secrets && npm run verify:browser && npm run verify:live"
+    "verify:all": "npm run typecheck && npm run test && npm run verify:secrets && npm run verify:browser && npm run verify:a11y && npm run verify:live"
   },
   "dependencies": {
     "react": "19.0.0",
