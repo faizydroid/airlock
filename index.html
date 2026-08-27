@@ -9,9 +9,13 @@
   makes after load, and "this page makes no requests" is easier to demonstrate when it is
   literally true — including in a DevTools Network tab on camera.
 -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23FFD93D'/%3E%3Crect x='1.5' y='1.5' width='29' height='29' fill='none' stroke='%23000' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%23000' stroke-width='3'/%3E%3Cpath d='M16 8v16' stroke='%23FFD93D' stroke-width='3.5'/%3E%3C/svg%3E">
-<!-- Matches the black masthead, so the mobile browser chrome reads as part of the page. -->
-<meta name="theme-color" content="#000000">
+<!--
+  Swiss mark: a white field, a black seal, and the Swiss Red quadrant that stands for the one
+  thing the boundary lets through. Still an inline data URI, so it costs no network request.
+-->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23fff'/%3E%3Ccircle cx='16' cy='16' r='9' fill='none' stroke='%23000' stroke-width='4'/%3E%3Crect x='14' y='0' width='4' height='32' fill='%23fff'/%3E%3Crect x='0' y='0' width='6' height='6' fill='%23FF3000'/%3E%3C/svg%3E">
+<!-- Matches the white masthead. -->
+<meta name="theme-color" content="#ffffff">
 <title>Airlock — your agent analyses data it never sees</title>
 <meta name="description" content="5,000 compensation records are generated in this tab and stay there. Your AI agent audits them through a bounded, budgeted, fully audited WebMCP tool interface, and never receives an individual record.">
 </head>

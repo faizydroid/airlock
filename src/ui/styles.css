@@ -1,39 +1,31 @@
 /*
- * Airlock — neo-brutalist design system.
+ * Airlock — International Typographic Style.
  *
- * The aesthetic is not decoration here, it is argument. This product's claim is that a boundary
- * exists and is enforced, and neo-brutalism is the only popular visual language whose first
- * principle is that structure must be *visible* rather than implied. Hard borders are hard
- * boundaries. A refusal is not a red tint on a table row, it is a stamp pressed onto a document.
+ * The style is doing argumentative work here, not decorative work. This product's claim is that a
+ * boundary is enforced and every disclosure is accounted for, and Swiss design is the visual
+ * language of exactly that posture: the grid is visible, the structure is honest, nothing is
+ * ornamental, and one signal colour pierces an otherwise monochrome field. A refusal rendered in
+ * Swiss Red is a stop sign, which is precisely what it is.
  *
- * Two deliberate departures from the canonical style, both in service of the same goal:
+ * Three deliberate decisions worth stating up front:
  *
- *   1. TWO TYPEFACES, NOT ONE. Space Grotesk 700 carries the chrome — headings, labels, buttons,
- *      the display numerals. Monospace carries the evidence — the ledger, the verbatim tool
- *      return, the cell table, tool names. Setting a 4,000-character JSON dump in a geometric
- *      sans at 700 would make the one artefact a sceptic actually reads harder to read, and this
- *      submission is judged on whether that artefact is believable. Monospace is also squarely
- *      within the style's own "default and raw / Web 1.0 homage" principle, so this is a
- *      refinement of the system rather than a retreat from it.
+ *   1. TWO REDS, NOT ONE. `#FF3000` on white is 3.70:1 — below WCAG AA's 4.5:1 for normal text. It
+ *      is kept for fills, rules, focus rings and large type, where 3:1 governs and it passes.
+ *      Small red text uses `--accent-ink` (#D62800, 5.05:1), which is indistinguishable in hue at
+ *      label sizes. The signature survives; the contrast failure does not.
  *
- *   2. COLOUR IS SEMANTIC, NOT SPRINKLED. The palette is assigned to meaning and never reused
- *      decoratively, because the interface's job is to let someone scan outcomes:
+ *   2. ONE ACCENT, SO STATE IS ENCODED BY WEIGHT RATHER THAN HUE. The previous palette had three
+ *      signal colours to spend on refused / withheld / disclosed. Swiss has one, which forces a
+ *      better hierarchy: black is the authoritative record (a refusal is adjudicated, not an
+ *      error), a hatched grey is suppression, and red is reserved for the two things that genuinely
+ *      demand attention — a critical finding and a disclosure that should never happen.
  *
- *        red     alarm       a leak, a critical finding, the cost of the ordinary path
- *        yellow  held        refused, awaiting your decision, focused
- *        violet  structural  panel chrome, withheld-as-too-small, informational
- *        black   the record  primary action, the ledger, every border
+ *   3. MONOSPACE SURVIVES, BUT ONLY FOR IDENTIFIERS. Inter has real tabular figures, so the ledger
+ *      and the cell table set in Inter with `tabular-nums` align better than they did in a mono
+ *      face. Mono is retained for the verbatim tool return, policy codes and tool names, which are
+ *      literal strings a reader may need to match character for character.
  *
- *      Note that red is NOT the primary action colour, which is where most neo-brutalist kits put
- *      it. Here a red button and a red "DISCLOSED" alarm in the same viewport would blunt the only
- *      signal that matters. Primary actions are black: maximum contrast, unmistakably primary, and
- *      it leaves red free to mean danger and nothing else.
- *
- * Accessibility invariant: all text is black, except on black where it is white. Every pairing in
- * this file therefore clears WCAG AA by a wide margin — black on red is ~8:1, on yellow ~14.8:1,
- * on violet ~11:1, on cream ~20:1, white on black 21:1. State is never encoded in opacity or in
- * hue alone; disabled and inactive use a hatch texture, and every coloured state also carries a
- * word or a border change.
+ * Depth comes from pattern, never from shadow. There is not a single `box-shadow` in this file.
  */
 
 @import './fonts.css';
@@ -42,170 +34,186 @@
   color-scheme: light;
 
   /* ---- palette ---- */
-  --paper: #fffdf5;
-  --white: #ffffff;
+  --paper: #ffffff;
   --ink: #000000;
-  --red: #ff6b6b;
-  --yellow: #ffd93d;
-  --violet: #c4b5fd;
+  --muted: #f2f2f2;
+  /* Swiss Red. Fills, rules, focus rings and type at 24px+ only — see note 1 above. */
+  --accent: #ff3000;
+  /* The same signal at small sizes, where --accent would fail AA on white. */
+  --accent-ink: #d62800;
 
-  /* ---- semantic aliases: use these, not the raw hues ---- */
-  --alarm: var(--red);
-  --held: var(--yellow);
-  --struct: var(--violet);
+  /* ---- data encoding ----
+   * Series colours for the canvas chart, and nothing else. A grey ramp is legitimate information
+   * design rather than a palette violation: six cohorts have to be distinguishable, and the style
+   * gives exactly two usable hues. Never used for chrome. */
+  --data-1: #000000;
+  --data-2: #ff3000;
+  --data-3: #6e6e6e;
+  --data-4: #ababab;
+  --data-5: #d6d6d6;
+  --data-6: #ffffff;
 
-  /* Sanctioned low-alpha black, used only for the background textures the style calls for. */
-  --texture: rgba(0, 0, 0, 0.1);
-  --texture-strong: rgba(0, 0, 0, 0.16);
-
-  /* ---- structure: borders are mandatory, 4px is the default ---- */
-  --b: 4px solid var(--ink);
-  --b2: 2px solid var(--ink);
-  --b3: 3px solid var(--ink);
-  --b8: 8px solid var(--ink);
-
-  /* ---- hard shadows: zero blur, zero spread, always down-right ---- */
-  --s-sm: 4px 4px 0 0 var(--ink);
-  --s-md: 8px 8px 0 0 var(--ink);
-  --s-lg: 12px 12px 0 0 var(--ink);
-  --s-xl: 16px 16px 0 0 var(--ink);
-  /* For elements sitting on a black field, where a black shadow would be invisible. */
-  --s-sm-inv: 4px 4px 0 0 var(--white);
+  /* ---- structure: borders are the grid made visible ---- */
+  --rule: 1px solid var(--ink);
+  --b: 2px solid var(--ink);
+  --b4: 4px solid var(--ink);
 
   /* ---- type ---- */
-  --sans: 'Space Grotesk', 'Arial Black', 'Helvetica Neue', system-ui, sans-serif;
+  --sans: 'Inter', system-ui, -apple-system, 'Helvetica Neue', Arial, sans-serif;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Consolas, monospace;
 
-  /* ---- motion: fast and mechanical, never eased-in-out ---- */
-  --fast: 100ms linear;
-  --snap: 180ms ease-out;
+  /* ---- motion: instant, mechanical, never elastic ---- */
+  --fast: 150ms linear;
+  --snap: 200ms ease-out;
 }
 
 * {
   box-sizing: border-box;
 }
 
+/* ---------- texture: depth without shadow ---------- */
+
+/* 24px grid, 3%. The layout's skeleton, made faintly visible. */
+.tx-grid {
+  background-image:
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+/* 16px dot matrix, 4%. Evokes halftone printing. */
+.tx-dots {
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+/* 45-degree rule, 10px. Directional energy on otherwise static panels. */
+.tx-diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.03) 0 1px,
+    transparent 1px 10px
+  );
+}
+
 body {
   margin: 0;
   color: var(--ink);
-  font: 700 14px/1.5 var(--sans);
-  /* Halftone over cream. Panels cover most of it, so this reads as paper grain in the gutters
-     rather than as a pattern competing with content. */
+  font: 400 14px/1.55 var(--sans);
+  /* Fractal noise at ~3.5%, simulating paper grain. The only thing keeping a pure-white canvas from
+     feeling like a blank document. */
   background-color: var(--paper);
-  background-image: radial-gradient(var(--texture) 1.5px, transparent 1.6px);
-  background-size: 22px 22px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* The evidence voice. Applied wherever a reader is checking a value rather than reading prose. */
-code,
+/* Identifiers a reader may need to match character for character. */
 pre,
-.ledger,
-table.cells,
 .tools code,
+.row .code,
+.attack-result code,
+.provenance code,
 .mono {
   font-family: var(--mono);
 }
 
-/* A shared label treatment: uppercase, wide-tracked, small, black. Used for every field label,
-   panel title and badge in the interface, which is what keeps the voice consistent.
+/* Every figure in the interface is column-comparable, so all of them get tabular figures. Inter
+   ships real tabular numerals, which is why the data tables no longer need a monospace face. */
+.row,
+table.cells,
+.counter-block .figures,
+.meter label {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The shared label treatment: uppercase, wide-tracked, small. Swiss hierarchy is built from scale,
+   weight and position — never from colour or decoration.
  *
- * Deliberately excluded: `.tag`, and the unit words inside `.counter-block .figures`. Both hold
+ * Deliberately excluded: `.tag`, and the unit words in `.counter-block .figures`. Both hold
  * descriptive phrases rather than labels ("aggregates only · nothing individual is rendered",
- * "~1,234,567 tokens"), and long uppercase phrases are measurably harder to read. Setting them in
- * caps would also rewrite what `innerText` and the accessible-name computation return, which the
- * browser verification reads. */
+ * "~225,810 tokens"), long uppercase phrases measurably slow reading, and `text-transform` rewrites
+ * what `innerText` and the accessible-name computation return — which the browser verification
+ * reads. */
 .meter label,
 .counter-block label,
 section.panel > h2,
 .attack-test,
-.sev {
+.sev,
+table.cells th,
+.row .verdict,
+.provenance {
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
 }
 
 ::selection {
-  background: var(--yellow);
+  background: var(--accent);
   color: var(--ink);
 }
 
-/* Focus is a yellow fill plus an offset black ring — no soft glow anywhere in this file.
-   :focus-visible so mouse users never see it, keyboard users always do. */
+/* A 2px red ring, offset. No glow, no fill change — the style calls for a high-contrast ring and
+   red-on-white clears the 3:1 that non-text UI requires. */
 :focus-visible {
-  outline: 3px solid var(--ink);
-  outline-offset: 3px;
-  background: var(--yellow);
-  color: var(--ink);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
-/* ---------- buttons: mechanical press ---------- */
+/* ---------- buttons: instant colour inversion ---------- */
 
 button {
-  background: var(--white);
+  background: var(--paper);
   color: var(--ink);
   border: var(--b);
   border-radius: 0;
-  padding: 9px 15px;
+  padding: 0 18px;
   min-height: 44px; /* touch target floor */
-  font: 700 12px/1.25 var(--sans);
+  font: 700 11px/1 var(--sans);
   text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.14em;
   cursor: pointer;
-  box-shadow: var(--s-sm);
+  /* No transform and no scale: the style specifies instant background changes for buttons, and
+     reserves movement for cards and navigation. */
   transition:
-    transform var(--fast),
-    box-shadow var(--fast),
-    background var(--fast);
+    background var(--fast),
+    color var(--fast),
+    border-color var(--fast);
 }
-
-/* Lift on hover, press on click. The press offsets by exactly the shadow distance so the button
-   lands precisely where its own shadow was — that geometric exactness is what makes it read as a
-   physical switch rather than a wobble. */
 button:hover:not(:disabled) {
-  background: var(--yellow);
-  transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 0 var(--ink);
-}
-button:active:not(:disabled) {
-  transform: translate(4px, 4px);
-  box-shadow: 0 0 0 0 var(--ink);
+  background: var(--ink);
+  color: var(--paper);
 }
 
 button.primary {
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
 }
+/* Inverting to red rather than to white: the primary action is the one place a hover should reach
+   for the signal colour. */
 button.primary:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--yellow);
+  background: var(--accent);
+  color: var(--ink);
 }
 
-button.danger {
-  background: var(--red);
-}
 button.danger:hover:not(:disabled) {
-  background: var(--ink);
-  color: var(--red);
+  background: var(--accent);
+  color: var(--ink);
 }
 
-/* Disabled without opacity and without grey, both of which the style forbids. A diagonal hatch
-   reads as unavailable at a glance while keeping text at full black contrast, so the label stays
-   legible to anyone who needs to know *what* is unavailable. */
+/* Disabled without opacity, which would drop contrast below AA and is invisible to assistive
+   technology. A hatched grey field reads as unavailable while the label stays at full black.
+ *
+ * The `color` reset is load-bearing: `.primary` sets white text, and overriding only the background
+ * once left white-on-grey at 1.6:1 — an invisible label. Equal specificity to `button.primary`, so
+ * this rule has to stay below it in the file. */
 button:disabled {
   cursor: default;
-  box-shadow: none;
-  /* Must reset the colour, not just the background. `.primary` sets white-on-black, and overriding
-     only the background left white text on a cream hatch — a 1.06:1 contrast ratio, i.e. an
-     invisible label. Relies on source order: this rule and `button.primary` have equal specificity,
-     so it has to stay below it in the file. */
   color: var(--ink);
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 5px,
-      var(--texture-strong) 5px 6px
-    ),
-    var(--paper);
+  border-color: var(--ink);
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    rgba(0, 0, 0, 0.13) 4px 5px
+  );
 }
 
 /* ---------- layout ---------- */
@@ -216,72 +224,81 @@ button:disabled {
   min-height: 100vh;
 }
 
-/* Masthead. Black field so the cream page below reads as the document and this reads as the
-   binding. */
+/* Masthead. White, defined by a single heavy rule rather than by a coloured band — the page reads
+   as a document, and the rule is its first structural statement. */
 header.bar {
   display: flex;
-  align-items: center;
-  gap: 22px;
-  padding: 14px 18px;
-  background: var(--ink);
-  color: var(--white);
-  border-bottom: var(--b);
+  align-items: flex-end;
+  gap: 32px;
+  padding: 22px 24px 18px;
+  border-bottom: var(--b4);
+  background: var(--paper);
   flex-wrap: wrap;
 }
 
-/* The wordmark as a slapped-on sticker: red fill, hard white shadow because a black shadow would
-   vanish into the black masthead, rotated off-axis. */
+/* Massive, tight, uppercase — type as the primary graphical element. The red block is the identity
+   mark: a functional signal, not an ornament. */
 .brand {
-  font-size: 19px;
-  line-height: 1;
-  letter-spacing: -0.03em;
+  font-size: clamp(26px, 3.4vw, 38px);
+  font-weight: 900;
+  line-height: 0.9;
+  letter-spacing: -0.045em;
   text-transform: uppercase;
-  background: var(--red);
-  color: var(--ink);
-  border: var(--b);
-  box-shadow: var(--s-sm-inv);
-  padding: 8px 12px 7px;
-  transform: rotate(-2deg);
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
 }
-/* The tagline is prose, not chrome, so it steps outside the sticker and drops the tracking. */
+.brand::before {
+  content: '';
+  width: 0.42em;
+  height: 0.42em;
+  background: var(--accent);
+  flex: none;
+}
+/* The tagline is prose: sentence case, regular weight, wide-tracked, deliberately quiet against the
+   wordmark. Extreme scale contrast is the whole point. */
 .brand span {
   display: block;
-  margin-top: 3px;
-  font-size: 10.5px;
-  letter-spacing: 0.01em;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.3;
+  max-width: 22ch;
   text-transform: none;
 }
 
 .meter {
   display: flex;
   flex-direction: column;
-  gap: 5px;
-  min-width: 190px;
+  gap: 7px;
+  min-width: 220px;
   margin-left: auto;
 }
 .meter label {
   font-size: 9.5px;
-  color: var(--white);
+  font-weight: 700;
 }
-/* On the black masthead every border and tick has to be white to exist at all. */
 .meter .track {
-  height: 14px;
-  border: var(--b2);
-  border-color: var(--white);
-  background: transparent;
+  height: 10px;
+  border: var(--b);
+  background: var(--paper);
   overflow: hidden;
 }
+/* Black, not red. Spending budget is the system working as designed; red is reserved for what
+   actually needs attention. */
 .meter .fill {
   height: 100%;
-  background: var(--yellow);
+  background: var(--ink);
   transition: width var(--snap);
 }
 
+/* Asymmetric 7:4. The style prefers dynamic tension to a symmetric split, and the left column
+   carries the analysis while the right carries the record. */
 main {
   display: grid;
-  grid-template-columns: 1fr 400px;
-  gap: 20px;
-  padding: 20px;
+  grid-template-columns: minmax(0, 7fr) minmax(0, 4fr);
+  gap: 28px;
+  padding: 28px 24px 40px;
   flex: 1;
   align-items: start;
 }
@@ -294,209 +311,231 @@ main {
 .col {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 28px;
+  min-width: 0;
+}
+
+/* Spans the asymmetric grid. Used by the attack panel, whose height would otherwise strand a
+   column's worth of empty page beside it. */
+.span-both {
+  grid-column: 1 / -1;
   min-width: 0;
 }
 
 /* ---------- panels ---------- */
 
 section.panel {
-  background: var(--white);
+  background: var(--paper);
   border: var(--b);
   border-radius: 0;
-  box-shadow: var(--s-md);
-  overflow: hidden;
+  /* No shadow, anywhere. Depth is pattern and rule only. */
 }
 
-/* Panel headers are colour-coded by role. Violet is the default structural chrome; the variants
-   below mark the two panels a reader should treat differently. */
 section.panel > h2 {
   margin: 0;
-  padding: 11px 14px;
-  font-size: 11px;
+  padding: 12px 16px;
+  font-size: 10.5px;
+  font-weight: 700;
   color: var(--ink);
-  background: var(--struct);
+  background: var(--paper);
   border-bottom: var(--b);
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
-/* The adversarial panel. Yellow because everything in it is about being held back. */
-section.panel.probe > h2 {
-  background: var(--held);
+/* Numbered section labels: a reading order for the page, and the one place small red type appears.
+   `--accent-ink` rather than `--accent` because this is 10px text on white. */
+section.panel > h2 .num {
+  color: var(--accent-ink);
+  font-weight: 900;
+  letter-spacing: 0.08em;
 }
-/* Awaiting a human decision. Red because it is blocking. */
+
+/* The adversarial section. A red rule under the header marks it as the place where the boundary is
+   tested, without spending a whole colour field on it. */
+section.panel.probe > h2 {
+  border-bottom: 4px solid var(--accent);
+}
+/* Awaiting a human decision — the only panel that is genuinely blocking, so it gets the accent. */
 section.panel.decide > h2 {
-  background: var(--alarm);
+  background: var(--accent);
+}
+section.panel.decide > h2 .num {
+  color: var(--ink);
 }
 /* The ledger is the authoritative record; black gives it the weight of a document header. */
 section.panel.record > h2 {
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
+}
+section.panel.record > h2 .num {
+  color: var(--paper);
 }
 
-/* Counts and qualifiers sit in a boxed chip on the right of the header. Sentence case, and
-   explicitly so: `text-transform` inherits, and these phrases are read, not scanned. */
+/* Counts and qualifiers, right-aligned in the header. Sentence case, and explicitly so:
+   `text-transform` inherits, and these are phrases to be read rather than labels to be scanned. */
 section.panel > h2 .tag {
   margin-left: auto;
-  font-size: 9.5px;
+  font-size: 10px;
+  font-weight: 500;
   text-transform: none;
-  letter-spacing: 0.01em;
-  background: var(--white);
+  letter-spacing: 0;
+  background: var(--muted);
   color: var(--ink);
-  border: var(--b2);
-  padding: 3px 7px;
+  border: var(--rule);
+  padding: 3px 8px;
 }
-section.panel.record > h2 .tag {
-  background: var(--yellow);
+section.panel.record > h2 .tag,
+section.panel.decide > h2 .tag {
+  background: var(--paper);
 }
 
 .body {
-  padding: 14px;
+  padding: 18px;
 }
 .body.tight {
   padding: 0;
 }
 
-/* Empty states get graph-paper fill and a bordered box. The style forbids leaving voids bare, and
-   an empty state is the first thing most visitors see. */
+/* Empty states carry the grid pattern rather than sitting blank. Active negative space is
+   structural in this style; dead space is not. */
 .empty {
-  margin: 14px;
-  padding: 24px 16px;
-  text-align: center;
-  border: var(--b3);
-  background-color: var(--paper);
+  padding: 44px 20px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 500;
+  background-color: var(--muted);
   background-image:
-    linear-gradient(to right, var(--texture) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--texture) 1px, transparent 1px);
-  background-size: 18px 18px;
+    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
+  background-size: 24px 24px;
+  border-bottom: var(--rule);
 }
 .empty em {
   font-style: normal;
-  background: var(--yellow);
-  border: var(--b2);
-  padding: 1px 5px;
+  font-weight: 700;
+  border-bottom: 2px solid var(--accent);
   white-space: nowrap;
 }
 
 /* ---------- counters: the counterfactual beside the outcome ---------- */
 
-/* Two stickers on the board rather than one divided bar. Separating them lets each carry its own
-   border, shadow and rotation, which is what makes the comparison feel like two competing claims
-   instead of one widget. */
+/* One bordered block divided by rules, not two floating cards. The comparison is a single
+   statement, and the grid should say so. */
 .counters {
   display: flex;
   align-items: stretch;
-  gap: 18px;
-  margin: 22px 20px 4px;
+  margin: 28px 24px 0;
+  border: var(--b4);
+  background: var(--paper);
 }
 
-/* Column flex so the label pins to the top and the figures take the remaining height. The two cards
-   share a height (`align-items: stretch`), and without this the shorter card's content clung to its
-   top edge and left a dead band beneath it. */
 .counter-block {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: 16px 20px 18px;
-  border: var(--b);
-}
-.counter-block .figures {
-  flex: 1;
-  /* Centres the wrapped lines of the horizontal card within the space it was given. */
-  align-content: center;
+  padding: 22px 24px 24px;
 }
 
-/* Asymmetric on purpose — the style prefers a 60/40 split to a symmetric one — and practically,
-   the left card carries three figures against the right card's two.
- *
- * Deliberately NOT rotated, unlike the wordmark, the arrow chip, the notices and the verdict
- * stamps. A hard offset shadow on a rotated element skews with it, and at ~700px wide that turns
- * the shadow into a long black wedge that reads as a rendering fault rather than a sticker. The
- * tilt earns its keep on small elements and works against itself on large ones. */
+/* Asymmetric by design, and practically: the left block carries three figures to the right's two.
+   Muted grey plus a diagonal texture marks it as the hypothetical — the path not taken. */
 .counter-block.would {
-  flex: 1.6;
-  background: var(--red);
-  box-shadow: var(--s-md);
+  flex: 1.5;
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.03) 0 1px,
+    transparent 1px 10px
+  );
 }
-/* Heavier shadow so the outcome wins the comparison visually. */
 .counter-block.did {
   flex: 1;
-  background: var(--white);
-  box-shadow: var(--s-lg);
+  background: var(--paper);
 }
 
 .counter-block label {
   display: block;
   font-size: 9.5px;
-  margin-bottom: 10px;
+  font-weight: 700;
+  margin-bottom: 18px;
 }
 
-/* Units stay sentence case. A giant numeral beside a lowercase unit is the stronger typographic
-   pairing — the numeral already carries all the weight — and it keeps `4.5 MB` / `tokens` intact
-   for the browser checks that read this block's innerText. */
+/* Units stay sentence case at regular weight. A large figure beside a quiet unit is the stronger
+   pairing, and it keeps `4.5 MB` / `tokens` intact for the checks that read this block's
+   innerText. */
 .counter-block .figures {
+  flex: 1;
   display: flex;
-  gap: 22px;
+  gap: 30px;
   flex-wrap: wrap;
   align-items: baseline;
+  align-content: center;
   font-size: 11px;
-  letter-spacing: 0.04em;
+  font-weight: 500;
+  letter-spacing: 0.02em;
 }
 .counter-block .figures b {
-  font-size: 27px;
+  font-size: clamp(26px, 3.2vw, 38px);
+  font-weight: 900;
   line-height: 1;
   letter-spacing: -0.04em;
-  font-variant-numeric: tabular-nums;
-  margin-right: 6px;
+  margin-right: 7px;
 }
 
-/* Hero first, supporting figure beneath it. Stacking these also closes the horizontal void a single
-   row left inside the card, which the style explicitly warns against. */
 .counter-block.did .figures {
   flex-direction: column;
   align-items: flex-start;
   justify-content: center;
-  gap: 11px;
+  gap: 0;
 }
 
-/* The hero numeral. `0 people` is the entire product in one glyph, so it gets display treatment:
-   oversized, outlined to add the mass Space Grotesk's 700 cannot supply on its own, and given a
-   hard offset text-shadow so it reads as pressed into the card. */
+/* The figure that is the entire product. Swiss lets a word be an image, and this is the one number
+   on the page that earns display scale — set against the muted, textured cost beside it. */
 .counter-block.did .figures b.ok {
   display: block;
-  font-size: 62px;
-  margin: 2px 0 -2px;
-  -webkit-text-stroke: 2px var(--ink);
-  text-shadow: 4px 4px 0 var(--yellow);
+  font-size: clamp(76px, 11vw, 150px);
+  line-height: 0.82;
+  letter-spacing: -0.06em;
+  margin: -4px 0 2px -0.02em;
+}
+/* "people" becomes the caption to that figure. */
+.counter-block.did .figures > span:first-child {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+}
+/* The supporting figure sits below a hairline, so the zero is not competing with it. */
+.counter-block.did .figures > span:last-child {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: var(--rule);
+  width: 100%;
 }
 
-.counter-block .figures.dim {
-  font-size: 11px;
-}
-
-/* The arrow between them is a black chip, not a glyph floating in space. */
+/* The divider carries the direction. Framed by rules on both sides so it reads as a deliberate
+   column of the grid rather than a floating glyph. */
 .counter-arrow {
   display: flex;
   align-items: center;
   justify-content: center;
-  align-self: center;
-  width: 40px;
-  height: 40px;
-  font-size: 20px;
-  background: var(--ink);
-  color: var(--white);
-  border: var(--b);
-  box-shadow: var(--s-sm);
-  transform: rotate(-4deg);
+  width: 62px;
   flex: none;
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink);
+  border-left: var(--b4);
+  border-right: var(--b4);
 }
 
 @media (max-width: 820px) {
   .counters {
     flex-direction: column;
+  }
+  .counter-block.would {
+    border-bottom: var(--b4);
   }
   .counter-arrow {
     display: none;
@@ -507,9 +546,9 @@ section.panel.record > h2 .tag {
 
 .toolbar {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
-  padding: 20px 20px 0;
+  padding: 24px 24px 0;
 }
 
 /* ---------- chart ---------- */
@@ -521,71 +560,83 @@ canvas {
 }
 .chart-legend {
   display: flex;
-  gap: 16px;
+  gap: 22px;
   flex-wrap: wrap;
-  padding: 4px 14px 14px;
-  font-size: 10px;
+  padding: 4px 18px 18px;
+  font-size: 9.5px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.14em;
 }
-/* Swatches are bordered squares, so a white or yellow series is still visible on white. */
+/* Ruled squares, so a white or light-grey series is still legible on white. */
 .chart-legend i {
   display: inline-block;
-  width: 11px;
-  height: 11px;
-  border: var(--b2);
+  width: 10px;
+  height: 10px;
+  border: var(--rule);
   border-radius: 0;
-  margin-right: 6px;
-  vertical-align: -1px;
+  margin-right: 8px;
+  vertical-align: 0;
+}
+/* The withheld swatch. A tighter, higher-contrast hatch than the full-size surfaces use, because at
+   10px the 5px-pitch version reads as flat grey. */
+.chart-legend i.hatched {
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 2px,
+    rgba(0, 0, 0, 0.45) 2px 3px
+  );
 }
 
 /* ---------- inspector: what the agent actually received ---------- */
 
 pre.json {
   margin: 0;
-  padding: 14px;
-  max-height: 330px;
+  padding: 18px;
+  max-height: 340px;
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-word;
   color: var(--ink);
   font-size: 11.5px;
-  line-height: 1.55;
+  line-height: 1.6;
   font-weight: 400;
-  background-color: var(--paper);
-  border-top: 0;
+  /* Grey marks this as a secondary surface: a raw artefact rather than composed content. */
+  background: var(--muted);
 }
 
 /* ---------- ledger ---------- */
 
 .ledger {
-  max-height: 340px;
+  max-height: 360px;
   overflow: auto;
 }
 .row {
   display: grid;
-  grid-template-columns: 42px 1fr 78px 52px;
-  gap: 10px;
-  padding: 8px 14px;
-  border-bottom: var(--b2);
+  grid-template-columns: 40px 1fr 82px 48px;
+  gap: 12px;
+  padding: 9px 16px;
+  border-bottom: var(--rule);
+  /* Every row reserves the marker column so the accent on a refusal cannot shift alignment. */
+  border-left: 4px solid transparent;
   align-items: center;
   font-size: 11.5px;
+  font-weight: 500;
 }
 .row:last-child {
   border-bottom: 0;
 }
 
-/* A refusal is the good outcome here, so it must not look like an error. Yellow field plus a
-   black-bordered verdict chip reads as "adjudicated and held" — the same language the attack
-   panel's stamps use. Disclosures stay plain, which makes refusals pop out of a scanned list. */
+/* A refusal is the good outcome, so it must not look like an error. A red rule in the margin marks
+   it as the row worth reading — the minimum ink that makes refusals scannable in a long list — and
+   the verdict itself is set in authoritative black. */
 .row.refused {
-  background: var(--held);
-}
-.row.ok {
-  background: var(--white);
+  border-left-color: var(--accent);
 }
 .row .seq {
   font-size: 10px;
+  font-weight: 700;
 }
 .row .what {
   min-width: 0;
@@ -594,99 +645,102 @@ pre.json {
   white-space: nowrap;
 }
 .row .verdict {
-  font-size: 9px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 8.5px;
+  font-weight: 700;
   text-align: center;
-  border: var(--b2);
-  padding: 2px 4px;
+  padding: 3px 4px;
+  border: var(--rule);
 }
 .row.refused .verdict {
   background: var(--ink);
-  color: var(--yellow);
+  color: var(--paper);
 }
 .row.ok .verdict {
-  background: var(--white);
+  background: var(--paper);
   color: var(--ink);
 }
 .row .cost {
   font-size: 10.5px;
   text-align: right;
-  font-variant-numeric: tabular-nums;
 }
 .row .code {
   font-size: 10px;
-  background: var(--white);
-  border: var(--b2);
+  background: var(--muted);
+  border: var(--rule);
   padding: 0 4px;
-  margin-left: 4px;
+  margin-left: 5px;
   white-space: nowrap;
 }
 
 /* ---------- findings + overrides ---------- */
 
 .card {
-  border: var(--b3);
+  border: var(--b);
   border-radius: 0;
-  padding: 13px;
-  margin: 0 14px 14px;
-  background: var(--white);
-  box-shadow: var(--s-sm);
+  padding: 18px;
+  margin: 0 18px 18px;
+  background: var(--paper);
   transition:
-    transform var(--snap),
-    box-shadow var(--snap);
+    border-color var(--fast),
+    transform var(--fast);
 }
-/* Cards lift; buttons press. Keeping those two motions distinct is what stops the interface
-   feeling uniformly springy. */
+/* A 1px lift and a border that snaps to the accent. Cards move; buttons only change colour. */
 .card:hover {
-  transform: translate(-2px, -2px);
-  box-shadow: 7px 7px 0 0 var(--ink);
+  border-color: var(--accent);
+  transform: translateY(-1px);
 }
 .card:first-of-type {
-  margin-top: 14px;
+  margin-top: 18px;
 }
 .card h3 {
-  margin: 0 0 7px;
-  font-size: 14px;
-  letter-spacing: -0.01em;
+  margin: 0 0 10px;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 .card p {
-  margin: 0 0 9px;
-  font-weight: 700;
-  line-height: 1.5;
-  font-size: 12.5px;
+  margin: 0 0 10px;
+  font-weight: 400;
+  line-height: 1.6;
+  font-size: 13px;
+  max-width: 68ch;
 }
 
 .card .sev {
-  font-size: 9px;
-  padding: 3px 7px;
+  font-size: 8.5px;
+  font-weight: 700;
+  padding: 4px 8px;
   border-radius: 0;
-  border: var(--b2);
+  border: var(--rule);
   margin-left: auto;
 }
 .sev.info {
-  background: var(--struct);
+  background: var(--muted);
 }
 .sev.concern {
-  background: var(--held);
+  background: var(--ink);
+  color: var(--paper);
 }
+/* Red earns its place here: a critical finding is one of exactly two states in the interface that
+   should stop a reader. */
 .sev.critical {
-  background: var(--alarm);
+  background: var(--accent);
 }
 
-/* A quote from the agent. Bordered on the left like a pull-quote in print, on paper stock so it
-   is visibly a different kind of content from the surrounding analysis. */
+/* The agent's own words, marked as a quotation. The red margin rule signals "this text came from
+   the model, not from the page" — a provenance distinction that matters in this product. */
 .card .quote {
-  border-left: var(--b8);
-  padding: 8px 10px;
-  margin: 10px 0;
-  background: var(--paper);
-  font-size: 12px;
-  line-height: 1.5;
+  border-left: 4px solid var(--accent);
+  padding: 10px 14px;
+  margin: 14px 0;
+  background: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
 }
 .card .actions {
   display: flex;
@@ -694,75 +748,77 @@ pre.json {
   flex-wrap: wrap;
 }
 .card.pending {
-  background: var(--held);
-  box-shadow: var(--s-md);
+  border: 4px solid var(--accent);
 }
 .card.pending .quote {
-  background: var(--white);
+  background: var(--paper);
+  border-left-color: var(--ink);
 }
-/* The consequence line in an override request. Boxed rather than greyed, because the style has no
-   grey and because this is the sentence that should not be skimmed. */
+/* The consequence of approving. Boxed rather than muted, because this is the sentence that should
+   not be skimmed. */
 .card .consequence {
-  border: var(--b2);
-  background: var(--white);
-  padding: 8px 10px;
-  font-size: 12px;
+  border: var(--rule);
+  background: var(--muted);
+  padding: 10px 14px;
+  font-size: 12.5px;
 }
 
 .provenance {
-  font-size: 10px;
-  margin-top: 8px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 9px;
+  font-weight: 700;
+  margin-top: 12px;
 }
 .provenance code {
   text-transform: none;
   letter-spacing: 0;
-  background: var(--paper);
-  border: var(--b2);
-  padding: 1px 4px;
+  font-weight: 400;
+  background: var(--muted);
+  border: var(--rule);
+  padding: 2px 5px;
 }
-/* The "N further cohorts not shown" footer under the cell table, which sits flush rather than
-   inside a padded card. */
 .provenance.more {
   margin-top: 0;
-  padding: 9px 11px;
-  border-top: var(--b2);
-  background: var(--paper);
+  padding: 12px 14px;
+  border-top: var(--rule);
+  background: var(--muted);
 }
 
 /* ---------- notices ---------- */
 
 .notice {
-  margin: 20px;
-  padding: 13px 15px;
-  border: var(--b);
-  background: var(--yellow);
-  box-shadow: var(--s-md);
-  font-size: 12.5px;
-  line-height: 1.5;
-  transform: rotate(-0.4deg);
+  margin: 28px 24px 0;
+  padding: 18px 20px;
+  border: var(--b4);
+  background: var(--paper);
+  font-size: 13px;
+  line-height: 1.6;
+  font-weight: 400;
 }
 .notice code {
-  background: var(--white);
-  border: var(--b2);
-  padding: 1px 5px;
-  font-size: 11px;
+  background: var(--muted);
+  border: var(--rule);
+  padding: 2px 6px;
+  font-size: 11.5px;
+  font-family: var(--mono);
   white-space: nowrap;
 }
 .notice strong {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.08em;
 }
-/* The replay caption updates continuously while a recorded session plays, so it gets the black
-   treatment: it is the narrator, not a warning. */
+/* The replay caption is a narrator, not a warning: it updates continuously while a recorded session
+   plays, so it takes the authoritative black field. */
 .notice[role='status'] {
   background: var(--ink);
-  color: var(--white);
-  transform: rotate(0.4deg);
+  color: var(--paper);
 }
 .notice[role='status'] code {
-  background: var(--yellow);
+  background: transparent;
+  border-color: var(--paper);
+  color: var(--paper);
 }
 
 /* ---------- tools exposed to the agent ---------- */
@@ -771,31 +827,30 @@ pre.json {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  padding: 14px;
+  padding: 18px;
 }
 .tools code {
-  border: var(--b2);
+  border: var(--rule);
   border-radius: 0;
-  padding: 4px 8px;
+  padding: 5px 8px;
   font-size: 10.5px;
   background: var(--paper);
 }
-/* Registered-and-new: yellow, briefly pulsed, so state-gated registration is visible the moment
-   it happens. */
+/* Registered on this state transition. Red because the appearance of a tool is a genuine event —
+   it is what `toolchange` means — and it is transient. */
 .tools code.new {
-  background: var(--yellow);
-  animation: neo-pulse 900ms steps(1) 3;
+  background: var(--accent);
+  animation: swiss-blink 900ms steps(1) 3;
 }
-/* Not yet registered. Hatched rather than faded — opacity is forbidden by the style, and a hatch
-   survives being screenshotted and re-encoded, which a 35% alpha does not. */
+/* Not yet registered. Hatched rather than faded: opacity drops contrast below AA and is invisible
+   to assistive technology, which is why the state is also written into the title attribute. */
 .tools code.off {
-  background:
-    repeating-linear-gradient(
-      45deg,
-      transparent 0 4px,
-      var(--texture-strong) 4px 5px
-    ),
-    var(--paper);
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    rgba(0, 0, 0, 0.13) 4px 5px
+  );
 }
 
 /* ---------- cell table ---------- */
@@ -804,20 +859,19 @@ table.cells {
   width: 100%;
   border-collapse: collapse;
   font-size: 11.5px;
+  font-weight: 500;
 }
 table.cells th,
 table.cells td {
   text-align: left;
-  padding: 7px 10px;
-  border-bottom: var(--b2);
+  padding: 9px 12px;
+  border-bottom: var(--rule);
 }
 table.cells th {
   background: var(--ink);
-  color: var(--white);
+  color: var(--paper);
   font-weight: 700;
-  font-size: 9.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+  font-size: 8.5px;
   position: sticky;
   top: 0;
 }
@@ -825,148 +879,194 @@ table.cells th.num,
 table.cells td.num {
   text-align: right;
 }
-table.cells td.num {
-  font-variant-numeric: tabular-nums;
+/* A withheld cohort is listed, never hidden: "this cohort exists and was not reported on" is a
+   different statement from "this cohort does not exist", and that difference is the product. The
+   hatch says suppressed without spending the accent colour on it. */
+table.cells td.withheld {
+  font-style: normal;
+  font-size: 8.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    rgba(0, 0, 0, 0.13) 4px 5px
+  );
 }
 .cell-scroll {
-  max-height: 260px;
+  max-height: 280px;
   overflow: auto;
-}
-/* A withheld cohort is listed, never hidden: "this cohort exists and was not reported on" is a
-   different statement from "this cohort does not exist", and the difference is the product. */
-table.cells td.withheld {
-  background: var(--struct);
-  font-style: normal;
-  text-transform: uppercase;
-  font-size: 9.5px;
-  letter-spacing: 0.1em;
 }
 
 /* ---------- attack panel ---------- */
 
+/* The box spans the panel; the *measure* is constrained on the text via `max-width` on a child.
+   Putting `max-width` on this element stopped its patterned background mid-panel, which read as a
+   rendering fault. */
 .attack-intro {
-  padding: 13px 14px;
-  font-size: 12px;
-  line-height: 1.5;
-  background: var(--paper);
+  padding: 16px 18px;
+  background-color: var(--muted);
+  background-image: radial-gradient(rgba(0, 0, 0, 0.06) 1px, transparent 1px);
+  background-size: 16px 16px;
   border-bottom: var(--b);
 }
+.attack-intro p,
+.attack-note p {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  font-weight: 400;
+  /* Flush-left, ragged-right, at a measure that stays readable however wide the panel gets. */
+  max-width: 84ch;
+}
 
+/* A grid of test cases. The panel spans the full page width, and a single column of 1,400px-wide
+   buttons would be an unreadable measure — two columns keeps each case at a sane width and reads as
+   what it is: a matrix of adversarial cases. Collapses to one column with the layout. */
 .attack-list {
-  padding: 14px 14px 0;
+  padding: 18px;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px 28px;
+  align-items: start;
+}
+@media (max-width: 1100px) {
+  .attack-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .attack {
-  margin-bottom: 14px;
+  min-width: 0;
 }
+/* These are questions, so they stay sentence case at reading weight — the one place the interface
+   speaks in a human voice rather than in labels. */
 .attack > button {
   width: 100%;
   text-align: left;
-  font-size: 11.5px;
-  line-height: 1.35;
+  padding: 13px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
   text-transform: none;
   letter-spacing: 0;
+  /* Reserved marker column, so firing an attack cannot shift the text. */
+  border-left: 4px solid var(--ink);
 }
 
-/* Outcome colours the button itself, so a fired list is scannable without reading a word of it. */
+/* A fired attack is settled: grey field, with the outcome in the margin rule. */
+.attack.done > button {
+  background: var(--muted);
+}
 .attack.done.refused > button {
-  background: var(--held);
+  border-left-color: var(--accent);
 }
 .attack.done.withheld > button {
-  background: var(--struct);
+  border-left-color: var(--ink);
 }
 .attack.done.disclosed > button {
-  background: var(--alarm);
+  background: var(--accent);
+  border-left-color: var(--ink);
+}
+.attack.done > button:hover:not(:disabled) {
+  background: var(--ink);
+  color: var(--paper);
 }
 
 .attack-result {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 9px;
-  padding: 11px 12px;
-  border: var(--b2);
-  border-left: var(--b8);
+  gap: 12px;
+  padding: 14px 16px;
+  border: var(--rule);
+  border-left: 4px solid var(--ink);
   background: var(--paper);
-  margin: 10px 0 0 14px;
+  margin: 0 0 0 16px;
 }
 
-/* THE STAMP.
+/* THE VERDICT.
  *
- * This is the single most important pixel in the build. The product's central event is a refusal,
- * and a refusal rendered as coloured text is forgettable. Rendered as a rotated, bordered,
- * hard-shadowed block it reads as an ink stamp pressed onto a document — adjudicated, not errored.
- * That distinction matters: refusal here is the system working, not failing. */
+ * The most important block in the build. A refusal is the system working, so it is set in
+ * authoritative black rather than in alarm red — the same treatment the ledger gives it. Suppression
+ * is a hatched grey. Red is held back for the one outcome that must never occur, so that when it
+ * does appear it is the only red block in the region and cannot be misread. */
 .attack-result .verdict {
-  font-size: 10px;
+  font-size: 9px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.14em;
-  border: var(--b3);
-  padding: 4px 9px;
-  box-shadow: 3px 3px 0 0 var(--ink);
+  letter-spacing: 0.18em;
+  padding: 6px 11px;
+  border: var(--rule);
 }
 .attack-result .verdict.refused {
-  background: var(--held);
-  transform: rotate(-3deg);
+  background: var(--ink);
+  color: var(--paper);
 }
 .attack-result .verdict.withheld {
-  background: var(--struct);
-  transform: rotate(2deg);
+  background-color: var(--muted);
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 4px,
+    rgba(0, 0, 0, 0.13) 4px 5px
+  );
 }
-/* A disclosure is a genuine failure and the only alarm state in the interface. Upright rather
-   than rotated — the tilt elsewhere signals "handled", and this is not handled — and pulsed to
-   pull the eye. Black on red, never white on red, which would fail contrast at this size. */
+/* Black on red is 5.68:1 and passes AA; white on red is 3.70:1 and does not. */
 .attack-result .verdict.disclosed {
-  background: var(--alarm);
+  background: var(--accent);
   color: var(--ink);
-  box-shadow: var(--s-sm);
-  animation: neo-pulse 700ms steps(1) infinite;
+  border: var(--b);
+  animation: swiss-blink 700ms steps(1) infinite;
 }
 
 .attack-result code {
   font-size: 10px;
-  background: var(--white);
-  border: var(--b2);
+  background: var(--muted);
+  border: var(--rule);
   border-radius: 0;
-  padding: 2px 6px;
+  padding: 3px 6px;
 }
+/* Cites the test that proves the outcome. Red at small size, so `--accent-ink`. */
 .attack-result .attack-test {
-  font-size: 9px;
+  font-size: 8.5px;
+  font-weight: 700;
+  color: var(--accent-ink);
 }
 .attack-result p {
   flex-basis: 100%;
-  margin: 3px 0 0;
-  font-size: 11.5px;
-  line-height: 1.5;
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  font-weight: 400;
+  max-width: 84ch;
 }
 
 .attack-actions {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  padding: 4px 14px 16px;
+  padding: 4px 18px 18px;
 }
-/* The "load the dataset first" hint, when the panel is inert. */
 .attack-note {
-  padding: 13px 14px;
-  font-size: 12px;
-  line-height: 1.5;
-  background: var(--paper);
+  padding: 16px 18px;
+  background: var(--muted);
   border-top: var(--b);
 }
 
 /* ---------- motion ---------- */
 
-/* steps(1) rather than a smooth fade: this blinks like a warning lamp instead of breathing like a
-   notification, which is the mechanical feel the style asks for. */
-@keyframes neo-pulse {
+/* steps(1) rather than a fade: this switches like an indicator lamp, which is the mechanical
+   register the style asks for. */
+@keyframes swiss-blink {
   0%,
   49% {
-    background: var(--alarm);
+    background-color: var(--accent);
   }
   50%,
   100% {
-    background: var(--yellow);
+    background-color: var(--paper);
   }
 }
 
@@ -978,19 +1078,12 @@ table.cells td.withheld {
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
-  /* The press and lift are informative, not decorative, so they are removed rather than slowed —
-     but the alarm must not be left mid-blink on an arbitrary frame. */
+  /* Neither indicator may be left stranded on an arbitrary frame. */
   .attack-result .verdict.disclosed,
   .tools code.new {
     animation: none;
+    background-color: var(--accent);
   }
-  .attack-result .verdict.disclosed {
-    background: var(--alarm);
-  }
-  .tools code.new {
-    background: var(--yellow);
-  }
-  button:hover:not(:disabled),
   .card:hover {
     transform: none;
   }
@@ -998,47 +1091,31 @@ table.cells td.withheld {
 
 /* ---------- responsive ---------- */
 
-/* The aesthetic holds at every width: borders stay 4px, shadows shrink rather than disappear, and
-   nothing collapses into a generic mobile layout. */
+/* Border weight, tracking, uppercase and pattern opacity never change with viewport. Only scale and
+   column count do. */
 @media (max-width: 820px) {
-  body {
-    font-size: 13px;
-  }
   main {
-    padding: 14px;
-    gap: 14px;
+    padding: 20px 16px 32px;
+    gap: 20px;
   }
   .col {
-    gap: 14px;
+    gap: 20px;
+  }
+  header.bar {
+    padding: 18px 16px 14px;
+    gap: 20px;
   }
   .counters {
-    margin: 16px 14px 4px;
-    gap: 14px;
+    margin: 20px 16px 0;
+  }
+  .counter-block {
+    padding: 18px;
   }
   .toolbar {
-    padding: 14px 14px 0;
-    gap: 10px;
+    padding: 20px 16px 0;
   }
   .notice {
-    margin: 14px;
-  }
-  section.panel {
-    box-shadow: var(--s-sm);
-  }
-  .counter-block.would {
-    box-shadow: var(--s-sm);
-  }
-  .counter-block.did {
-    box-shadow: var(--s-md);
-  }
-  .counter-block.did .figures b.ok {
-    font-size: 48px;
-  }
-  .counter-block .figures b {
-    font-size: 23px;
-  }
-  .brand {
-    font-size: 16px;
+    margin: 20px 16px 0;
   }
   .meter {
     min-width: 100%;
@@ -1047,22 +1124,18 @@ table.cells td.withheld {
 }
 
 @media (max-width: 560px) {
-  /* Full-width controls below the point where two buttons stop fitting side by side. */
   .toolbar button,
   .attack-actions button {
     width: 100%;
   }
-  .counter-block.did .figures b.ok {
-    font-size: 40px;
-  }
-  .row {
-    grid-template-columns: 34px 1fr 62px;
-  }
-  /* Cost is the least load-bearing column; drop it before the verdict or the description. */
-  .row .cost {
-    display: none;
-  }
   .attack-result {
     margin-left: 0;
+  }
+  .row {
+    grid-template-columns: 32px 1fr 74px;
+  }
+  /* Cost is the least load-bearing column; it goes before the verdict or the description. */
+  .row .cost {
+    display: none;
   }
 }

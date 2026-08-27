@@ -1,5 +1,5 @@
 /**
- * Bakes Space Grotesk into the stylesheet as base64 woff2.
+ * Bakes Inter into the stylesheet as a base64 woff2 face.
  *
  * Why not a <link> to Google Fonts, which is what the design system specifies:
  *
@@ -15,8 +15,8 @@
  *
  *   node scripts/embed-font.mjs
  *
- * Space Grotesk is licensed under the SIL Open Font License 1.1 (Florian Karsten), which permits
- * embedding. Attribution lives in the generated file's header and in README.md.
+ * Inter is licensed under the SIL Open Font License 1.1 (Rasmus Andersson), which permits
+ * embedding. Attribution lives in the generated file's header, in licenses/ and in README.md.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -25,24 +25,20 @@ const root = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(root, 'src', 'ui', 'fonts.css');
 
 /**
- * 700 only, and only the latin subset.
+ * The variable face across 400..900, latin subset only.
  *
- * The design system asks for "Space Grotesk at 900 weight" for display type. Space Grotesk has no
- * 900 — the family runs 300..700, and Google's API silently returns the 700 face for a `900`
- * request. Declaring `font-weight: 900` against it would make browsers synthesise a faux-bold,
- * which smears the geometry and looks especially bad under `-webkit-text-stroke`.
+ * Requesting a range rather than discrete weights returns Inter's variable font: one file that
+ * covers Regular through Black, instead of four static faces that would cost roughly 50% more
+ * bytes and still leave gaps. The design system uses 400, 500, 700 and 900, so a continuous axis
+ * covers it exactly.
  *
- * So the heaviest real weight is 700, and display type gets its extra mass from text-stroke,
- * negative tracking and size — which is what the design system prescribes for display anyway. One
- * face, 12.5 kB, no synthesis.
- *
- * latin-ext and vietnamese are dropped: the UI and the generated dataset are English, so those
- * subsets would triple the payload for glyphs that never render.
+ * latin-ext, greek, cyrillic and vietnamese are dropped: the UI and the generated dataset are
+ * English, and those subsets would multiply the payload for glyphs that never render.
  */
-const CSS_URL = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&display=block';
+const CSS_URL = 'https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=block';
 
 // Google serves woff2 + unicode-range subsets only to browsers it recognises. Without a modern UA
-// it returns legacy truetype, which is roughly four times the size.
+// it returns legacy truetype, which is several times the size.
 const UA =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) '
   + 'Chrome/131.0.0.0 Safari/537.36';
@@ -53,8 +49,7 @@ async function main() {
   if (!res.ok) throw new Error(`Google Fonts returned ${res.status}`);
   const css = await res.text();
 
-  // Each @font-face block is preceded by a subset comment. We keep only latin: the UI is English
-  // and latin-ext/vietnamese/cyrillic would triple the payload for glyphs never rendered.
+  // Each @font-face block is preceded by a subset comment.
   const blocks = css.split('/*').slice(1);
   const faces = [];
 
@@ -62,12 +57,17 @@ async function main() {
     const subset = block.slice(0, block.indexOf('*/')).trim();
     if (subset !== 'latin') continue;
 
-    const weight = /font-weight:\s*(\d+)/.exec(block)?.[1];
+    // Captured verbatim, NOT parsed as a single integer. A variable face declares a range
+    // ("font-weight: 400 900"), and an earlier version of this script matched only the first
+    // number — which pinned the face to one weight and left the browser synthesising a faux-bold
+    // for everything else.
+    const weight = /font-weight:\s*([^;]+);/.exec(block)?.[1]?.trim();
+    const style = /font-style:\s*([^;]+);/.exec(block)?.[1]?.trim() ?? 'normal';
     const url = /src:\s*url\((https:[^)]+\.woff2)\)/.exec(block)?.[1];
     const range = /unicode-range:\s*([^;]+);/.exec(block)?.[1]?.trim();
     if (!weight || !url) continue;
 
-    faces.push({ weight, url, range });
+    faces.push({ weight, style, url, range });
   }
 
   if (faces.length === 0) throw new Error('no latin woff2 faces found in the Google Fonts response');
@@ -75,17 +75,21 @@ async function main() {
   const parts = [];
   let total = 0;
 
-  for (const face of faces.sort((a, b) => Number(a.weight) - Number(b.weight))) {
+  for (const face of faces) {
     const bin = await fetch(face.url, { headers: { 'User-Agent': UA } });
     if (!bin.ok) throw new Error(`font ${face.weight} returned ${bin.status}`);
     const buf = Buffer.from(await bin.arrayBuffer());
     total += buf.length;
-    process.stdout.write(`  weight ${face.weight}: ${(buf.length / 1024).toFixed(1)} kB woff2\n`);
+    const variable = /\s/.test(face.weight);
+    process.stdout.write(
+      `  weight ${face.weight}${variable ? ' (variable axis)' : ''}: `
+        + `${(buf.length / 1024).toFixed(1)} kB woff2\n`
+    );
 
     parts.push(
       `@font-face {\n`
-        + `  font-family: 'Space Grotesk';\n`
-        + `  font-style: normal;\n`
+        + `  font-family: 'Inter';\n`
+        + `  font-style: ${face.style};\n`
         + `  font-weight: ${face.weight};\n`
         // `block` matches the design system's `display=block`. With the bytes inline there is no
         // fetch to block on, so this only affects the pathological no-CSS case.
@@ -98,18 +102,17 @@ async function main() {
 
   const header =
     `/*\n`
-    + ` * Space Grotesk, embedded as base64 woff2. GENERATED — do not edit by hand.\n`
+    + ` * Inter, embedded as base64 woff2. GENERATED — do not edit by hand.\n`
     + ` * Regenerate with: node scripts/embed-font.mjs\n`
     + ` *\n`
     + ` * Inlined rather than linked from Google Fonts because Airlock claims zero network requests\n`
     + ` * after load, and because a font request would send every visitor's IP to a third party in a\n`
     + ` * product about not disclosing data. See scripts/embed-font.mjs for the full reasoning.\n`
     + ` *\n`
-    + ` * Space Grotesk (c) Florian Karsten, SIL Open Font License 1.1.\n`
-    + ` * https://fonts.google.com/specimen/Space+Grotesk\n`
+    + ` * Inter (c) Rasmus Andersson, SIL Open Font License 1.1.\n`
+    + ` * https://fonts.google.com/specimen/Inter\n`
     + ` *\n`
-    + ` * Latin subset, weight 700 only. Space Grotesk has no 900 weight; display type gets its\n`
-    + ` * extra mass from -webkit-text-stroke rather than from faux-bold synthesis.\n`
+    + ` * Latin subset, variable weight axis 400..900 — one file covering Regular through Black.\n`
     + ` */\n\n`;
 
   fs.writeFileSync(OUT, header + parts.join('\n'), 'utf8');

@@ -73,6 +73,7 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
   return (
     <section className="panel probe">
       <h2>
+        <span className="num">07</span>
         Try to break it
         <span className="tag">
           {fired === 0
@@ -81,10 +82,14 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
         </span>
       </h2>
 
+      {/* Wrapped in a <p> so the reading measure can be constrained on the text without also
+          constraining the patterned background, which would stop mid-panel. */}
       <div className="attack-intro">
-        Each button fires a real tool call. These are the same attacks the automated suite runs, so
-        what you see here is what the tests assert — including two that succeeded against an earlier
-        build and are named in the README.
+        <p>
+          Each button fires a real tool call. These are the same attacks the automated suite runs,
+          so what you see here is what the tests assert — including two that succeeded against an
+          earlier build and are named in the README.
+        </p>
       </div>
 
       <div className="attack-list">
@@ -130,7 +135,9 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
 
       {!loaded && (
         <div className="attack-note">
-          Load the dataset first — there is nothing to attack until there is something to protect.
+          <p>
+            Load the dataset first — there is nothing to attack until there is something to protect.
+          </p>
         </div>
       )}
     </section>

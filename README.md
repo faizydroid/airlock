@@ -384,10 +384,10 @@ Run it with `npm run probe`.
 
 MIT. See [LICENSE](LICENSE).
 
-**Space Grotesk** (© 2020 The Space Grotesk Project Authors) is embedded in the stylesheet as a
-base64 woff2 face under the SIL Open Font License 1.1 — see
-[licenses/SIL-OFL-1.1-Space-Grotesk.txt](licenses/SIL-OFL-1.1-Space-Grotesk.txt). Latin subset,
-weight 700, unmodified.
+**Inter** (© 2020 The Inter Project Authors) is embedded in the stylesheet as a base64 woff2 face
+under the SIL Open Font License 1.1 — see
+[licenses/SIL-OFL-1.1-Inter.txt](licenses/SIL-OFL-1.1-Inter.txt). Latin subset, variable weight axis
+400–900, unmodified.
 
 It is embedded rather than linked from Google Fonts on purpose. A webfont request would falsify the
 "zero network requests after load" claim above, and it would send every visitor's IP address to a

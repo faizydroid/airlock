@@ -51,9 +51,22 @@ for (const file of files) {
     if (re.test(text)) report(file, label);
   }
 
+  /**
+   * Inline webfont payloads are woff2 binaries, not credentials.
+   *
+   * Stripped surgically rather than by exempting the file: the pattern only matches a payload that
+   * actually begins with the base64 encoding of the woff2 signature — `wOF2` is `d09GMg` — so a long
+   * base64 run that is not a font, including one hidden in this same file, is still reported. A
+   * blanket file exemption would have created exactly the blind spot this script exists to prevent.
+   */
+  const scrubbed = text.replace(
+    /(url\(data:font\/woff2;base64,)d09GMg[A-Za-z0-9+/]+={0,2}(\))/g,
+    '$1WOFF2_PAYLOAD_STRIPPED$2'
+  );
+
   // Long unbroken base64 runs. The origin-trial token is ~260 chars, so 80 is a safe net.
   if (!BASE64_EXEMPT.some((p) => p.test(file))) {
-    const runs = text.match(/[A-Za-z0-9+/]{80,}={0,2}/g);
+    const runs = scrubbed.match(/[A-Za-z0-9+/]{80,}={0,2}/g);
     if (runs) {
       // The inline SVG favicon is percent-encoded, not base64, so it will not match. Anything that
       // does match here is worth a human looking at.

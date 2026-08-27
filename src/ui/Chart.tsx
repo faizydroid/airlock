@@ -31,12 +31,23 @@ import type { AggregateOk, Cell } from '../kernel/kernel.js';
 /**
  * Series palette, in assignment order.
  *
- * Black leads because the bars are the record, and because a single-series chart — the common case
- * — should read as ink on paper rather than as a colour choice. Red sits late: it means alarm
- * everywhere else in the interface, and spending it on the second series would blunt the only
- * signal that matters.
+ * Black leads because the bars are the record, and because a single-series chart — the common case —
+ * should read as ink on paper rather than as a colour choice. Swiss Red takes the second series so
+ * that a two-series comparison, which is what a pay-gap chart is, lands as black against red.
+ * Everything after that is a grey ramp.
+ *
+ * These are the `--data-*` tokens rather than the chrome palette, because six cohorts have to be
+ * distinguishable and the style supplies exactly two usable hues. A grey ramp for series encoding is
+ * ordinary information design; using those greys anywhere in the interface chrome would not be.
  */
-const SERIES_TOKENS = ['--ink', '--violet', '--yellow', '--red', '--white', '--paper'] as const;
+const SERIES_TOKENS = [
+  '--data-1',
+  '--data-2',
+  '--data-3',
+  '--data-4',
+  '--data-5',
+  '--data-6'
+] as const;
 
 interface Props {
   result: AggregateOk;
@@ -51,22 +62,50 @@ function label(cell: Cell, dims: string[]): string {
  * Resolves the design tokens the canvas needs. Falls back to literals only for the pathological
  * case where the stylesheet has not applied, so a missing token can never paint invisible bars.
  */
+const SERIES_FALLBACK: Record<string, string> = {
+  '--data-1': '#000000',
+  '--data-2': '#ff3000',
+  '--data-3': '#6e6e6e',
+  '--data-4': '#ababab',
+  '--data-5': '#d6d6d6',
+  '--data-6': '#ffffff'
+};
+
 function readTokens() {
   const cs = getComputedStyle(document.documentElement);
   const get = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
 
   return {
     ink: get('--ink', '#000000'),
-    violet: get('--violet', '#c4b5fd'),
-    grid: get('--texture', 'rgba(0,0,0,0.1)'),
-    series: SERIES_TOKENS.map((t) =>
-      get(
-        t,
-        // Order-matched fallbacks, used only if :root is unavailable.
-        { '--ink': '#000000', '--violet': '#c4b5fd', '--yellow': '#ffd93d', '--red': '#ff6b6b', '--white': '#ffffff', '--paper': '#fffdf5' }[t]!
-      )
-    )
+    muted: get('--muted', '#f2f2f2'),
+    series: SERIES_TOKENS.map((t) => get(t, SERIES_FALLBACK[t]!))
   };
+}
+
+/**
+ * A 45-degree hatch, matching the CSS `repeating-linear-gradient` used for every other suppressed
+ * surface in the interface — the withheld table cell, the withheld verdict, the unregistered tool
+ * chip, the disabled button.
+ *
+ * Withheld cohorts are marked by texture rather than by colour on purpose: the accent is reserved
+ * for the two states that must stop a reader, and a suppressed cohort is not one of them.
+ */
+function hatchPattern(ctx: CanvasRenderingContext2D, ink: string): CanvasPattern | string {
+  const tile = document.createElement('canvas');
+  tile.width = 6;
+  tile.height = 6;
+  const g = tile.getContext('2d');
+  if (!g) return ink;
+  g.strokeStyle = ink;
+  g.lineWidth = 1;
+  // Two strokes so the diagonal continues across tile boundaries without a visible seam.
+  g.beginPath();
+  g.moveTo(-1, 5);
+  g.lineTo(5, -1);
+  g.moveTo(2, 8);
+  g.lineTo(8, 2);
+  g.stroke();
+  return ctx.createPattern(tile, 'repeat') ?? ink;
 }
 
 export function Chart({ result }: Props) {
@@ -84,6 +123,7 @@ export function Chart({ result }: Props) {
     if (!ctx) return;
 
     const t = readTokens();
+    const hatch = hatchPattern(ctx, t.ink);
 
     const dpr = window.devicePixelRatio || 1;
     const cssW = canvas.parentElement?.clientWidth ?? 700;
@@ -105,12 +145,12 @@ export function Chart({ result }: Props) {
     const max = values.length ? Math.max(...values) : 1;
     const scale = (v: number) => plotH - (v / (max * 1.1)) * plotH;
 
-    // Bold mono for every numeral, matching the stylesheet's "evidence voice".
-    ctx.font = '700 10px ui-monospace, SFMono-Regular, Consolas, monospace';
+    // Inter, matching the interface. Uppercase tracking is applied by hand below where it matters,
+    // since canvas has no letter-spacing before Chrome 99+ and this must not depend on it.
+    ctx.font = '700 10px Inter, system-ui, sans-serif';
 
-    // Gridlines: the sanctioned low-alpha black the style permits for texture, at hairline weight
-    // so they sit behind the bars rather than competing with them.
-    ctx.strokeStyle = t.grid;
+    // Gridlines at hairline weight, so they describe the scale without competing with the bars.
+    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
     ctx.lineWidth = 1;
     const ticks = 4;
     for (let i = 0; i <= ticks; i++) {
@@ -122,7 +162,7 @@ export function Chart({ result }: Props) {
       ctx.stroke();
       ctx.fillStyle = t.ink;
       ctx.textAlign = 'right';
-      ctx.fillText(compact(v), pad.left - 9, y + 3);
+      ctx.fillText(compact(v), pad.left - 10, y + 3.5);
     }
 
     // Bars.
@@ -142,31 +182,32 @@ export function Chart({ result }: Props) {
         const w = Math.max(2, barW - 2.5);
 
         if (value === undefined) {
-          // Withheld cohorts are drawn as a low outlined stub rather than omitted. Visible absence
-          // is the honest representation: an empty gap would read as "no data", which is a
-          // different claim from "not disclosed". Violet matches the withheld cell in the table
-          // below and the legend swatch, so the three agree without a caption.
-          const h = 9;
-          ctx.fillStyle = t.violet;
+          // Withheld cohorts are drawn as a hatched stub rather than omitted. Visible absence is the
+          // honest representation: an empty gap would read as "no data", which is a different claim
+          // from "not disclosed". The hatch is the same 45-degree texture every other suppressed
+          // surface uses, so the chart, the table and the legend agree without needing a caption.
+          const h = 14;
+          ctx.fillStyle = t.muted;
+          ctx.fillRect(cx, pad.top + plotH - h, w, h);
+          ctx.fillStyle = hatch;
           ctx.fillRect(cx, pad.top + plotH - h, w, h);
           ctx.strokeStyle = t.ink;
-          ctx.lineWidth = 2;
-          ctx.strokeRect(cx + 1, pad.top + plotH - h + 1, w - 2, h - 2);
+          ctx.lineWidth = 1;
+          ctx.strokeRect(cx + 0.5, pad.top + plotH - h + 0.5, w - 1, h - 1);
           continue;
         }
 
         const y = pad.top + scale(value);
         const h = plotH - scale(value);
 
-        // Fill, then a hard black outline. The outline is the load-bearing detail: it is what makes
-        // a white or yellow series legible on a white panel, and it is the chart's share of the
-        // "every element has a border" rule. No drop shadow — grouped bars sit close enough that an
-        // offset shadow would fall across the neighbouring bar.
+        // Fill, then a hairline black rule. The rule is load-bearing: it is what makes the light end
+        // of the grey ramp legible on white, and it is the chart's share of "structure is visible".
+        // One pixel rather than two — this style is precise, not heavy.
         ctx.fillStyle = t.series[si % t.series.length]!;
         ctx.fillRect(cx, y, w, h);
         ctx.strokeStyle = t.ink;
-        ctx.lineWidth = 2;
-        ctx.strokeRect(cx + 1, y + 1, w - 2, Math.max(0, h - 1));
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cx + 0.5, y + 0.5, w - 1, Math.max(0, h - 0.5));
       }
 
       ctx.fillStyle = t.ink;
@@ -175,13 +216,14 @@ export function Chart({ result }: Props) {
       ctx.fillText(truncate(String(x), Math.floor(groupW / 6)), cx, pad.top + plotH + 17);
     }
 
-    // Axes drawn last and heavy, so the plot sits inside a visible structure rather than floating.
+    // Axes drawn last at 2px, so the plot sits inside a visible structure rather than floating.
+    // Matches the 2px border weight the stylesheet uses for panels.
     ctx.strokeStyle = t.ink;
-    ctx.lineWidth = 3;
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(pad.left - 1.5, pad.top);
-    ctx.lineTo(pad.left - 1.5, pad.top + plotH + 1.5);
-    ctx.lineTo(pad.left + plotW, pad.top + plotH + 1.5);
+    ctx.moveTo(pad.left - 1, pad.top);
+    ctx.lineTo(pad.left - 1, pad.top + plotH + 1);
+    ctx.lineTo(pad.left + plotW, pad.top + plotH + 1);
     ctx.stroke();
 
     // Axis captions.
@@ -223,7 +265,9 @@ export function Chart({ result }: Props) {
           : null}
         {withheld > 0 ? (
           <span>
-            <i style={{ background: 'var(--violet)' }} />
+            {/* Class rather than an inline token, so the swatch's hatch is defined in one place
+                alongside every other suppressed surface. */}
+            <i className="hatched" />
             {withheld} cohort{withheld === 1 ? '' : 's'} withheld — below the disclosure floor
           </span>
         ) : null}

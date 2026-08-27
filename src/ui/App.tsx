@@ -161,6 +161,7 @@ export function App() {
         <div className="col">
           <section className="panel">
             <h2>
+              <span className="num">01</span>
               What you see
               <span className="tag">
                 aggregates only · nothing individual is rendered
@@ -179,12 +180,9 @@ export function App() {
             )}
           </section>
 
-          <div id="attack">
-            <AttackPanel loaded={s.loaded} />
-          </div>
-
           <section className="panel">
             <h2>
+              <span className="num">02</span>
               Findings
               <span className="tag">{s.findings.length} recorded</span>
             </h2>
@@ -213,6 +211,7 @@ export function App() {
         <div className="col">
           <section className="panel">
             <h2>
+              <span className="num">03</span>
               What the agent received
               <span className="tag">verbatim tool return</span>
             </h2>
@@ -230,6 +229,7 @@ export function App() {
           {pending.length > 0 && (
             <section className="panel decide">
               <h2>
+                <span className="num">04</span>
                 Your decision required
                 <span className="tag">{pending.length} pending</span>
               </h2>
@@ -243,6 +243,7 @@ export function App() {
 
           <section className="panel record">
             <h2>
+              <span className="num">05</span>
               Disclosure ledger
               <span className="tag">append-only</span>
             </h2>
@@ -259,6 +260,7 @@ export function App() {
 
           <section className="panel">
             <h2>
+              <span className="num">06</span>
               Tools exposed to the agent
               <span className="tag">
                 {toolNames.length} of {allToolDefs.length} registered
@@ -288,6 +290,18 @@ export function App() {
               })}
             </div>
           </section>
+        </div>
+
+        {/*
+          Full width, spanning both grid columns.
+          Held in a 7/4 column this panel ran ~1,500px tall against a ~900px right column, leaving
+          roughly 1,200px of dead white beside it — which reads as a layout failure rather than as
+          the active negative space the style intends. Spanning the grid balances the two columns
+          and gives the result text a proper measure. It also lands the page's closing argument as
+          its own full-bleed section rather than as the last item in a sidebar.
+        */}
+        <div className="span-both" id="attack">
+          <AttackPanel loaded={s.loaded} />
         </div>
       </main>
     </div>
