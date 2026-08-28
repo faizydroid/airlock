@@ -31,7 +31,7 @@ A bare zero is decoration. A zero beside 5,000 is a measurement.
 
 Built for the [OpenAI WebMCP Challenge](https://openai.com/webmcp-challenge/).
 
-**166 tests · 42 browser checks · zero network requests after load · no server**
+**166 tests · 47 browser checks · a real model driving the tools · zero network requests after load · no server**
 
 **Scope, stated up front:** this build generates its dataset rather than importing one. There is no
 file upload path. The privacy machinery is real and tested; the ingestion story is not built. See
@@ -301,16 +301,17 @@ Stated plainly, including what does not work.
 
 | Environment | Result |
 |---|---|
-| **Chrome 151 with WebMCP enabled** | **Verified.** `document.modelContext` present; 2 tools registered before a dataset exists, 8 after; refusals surfaced with policy codes. 27 automated browser checks — run `npm run verify:browser`. |
+| **Chrome 151 with WebMCP enabled** | **Verified.** `document.modelContext` present; 2 tools registered before a dataset exists, 8 after; refusals surfaced with policy codes. 47 automated browser checks — run `npm run verify:browser`. |
+| **A real model driving the tools** | **Verified.** `claude-haiku-4-5` via Amazon Bedrock chose 7 of 8 tools unprompted from their descriptions alone, ran a full audit in 16 calls, and received zero individual records. Reproduce with `npm run agent`; transcript in [`artifacts/agent-session.md`](artifacts/agent-session.md). |
 | Chrome 149+ with `chrome://flags/#enable-webmcp-testing` | Same path as above; the flag is the manual equivalent of the launch switch. |
 | Chrome without the flag, origin-trial token served | **Does not work.** See below. |
-| ChatGPT desktop built-in browser | **Does not work.** Requires an authorised origin we could not obtain. |
-| Any browser, no WebMCP | **The UI and Replay work.** The full audit narrative is one click away. |
+| ChatGPT desktop built-in browser | **Should work; not verified by us.** OpenAI shipped WebMCP there as [site tools](https://help.openai.com/en/articles/20001423-using-site-tools-in-the-chatgpt-desktop-app) on 27 August 2026 — no flag, no extension, no origin trial, and explicitly *not* in Chrome. Availability depends on the account and the selected model. We have no access to test it, so this row states the platform's documentation rather than our own observation. |
+| Any browser, no WebMCP | **The UI and Replay work.** The full audit narrative is one click away, and this path is checked by `npm run verify:a11y`. |
 
 ### Automated browser verification
 
 `npm run verify:browser` launches your installed Chrome with `--enable-features=WebMCP`, serves the
-production build over a secure context, and asserts 27 properties that only a browser can answer.
+production build over a secure context, and asserts 47 properties that only a browser can answer.
 Everything else in the test suite runs in Node against the kernel, so this is what closes the gap
 between "the logic is correct" and "the application works".
 

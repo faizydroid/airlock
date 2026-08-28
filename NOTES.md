@@ -349,3 +349,39 @@ registration, `getTools`/`executeTool` both live.
    if time allows.
 
 Time spent on this thread exceeded its value. Should have been time-boxed after E1d.
+
+---
+
+## E16 — ChatGPT desktop shipped WebMCP after all (2026-08-27)
+
+**This supersedes the Day 1 finding above.** Everything earlier in this file about the ChatGPT
+desktop built-in browser reporting `document.modelContext` as ABSENT, and the conclusion that it
+"requires an authorised origin we could not obtain", was true when observed and is now out of date.
+
+OpenAI shipped WebMCP in the ChatGPT desktop app's built-in browser as a feature called **site
+tools**, documented at
+<https://help.openai.com/en/articles/20001423-using-site-tools-in-the-chatgpt-desktop-app>.
+
+What the documentation states, which materially changes the plan:
+
+- **No flag, no extension, no origin trial.** "No separate connection is required." Availability
+  depends on the account having access and the selected model supporting it.
+- **Built-in browser only** — explicitly *not* Chrome. So this is a different surface from the
+  flagged-Chrome path, not a replacement for it.
+- An **arrow appears in the address bar** when a page provides tools. Selecting it lists them
+  "including whether they can read information or make changes".
+- ChatGPT "can discover and use it automatically" when a tool matches the request.
+- Tools are scoped to the page and the signed-in session, and vanish when the page closes.
+- Toggle at Browser settings → Permissions → Enable site tools.
+- "Tools provided only by embedded content are not currently supported" — irrelevant here, Airlock
+  is top-level.
+
+**Why this is worth acting on.** The `annotations: { readOnlyHint: true }` set on every analysis
+tool in `tools.ts` is precisely what drives that read-versus-change distinction in the arrow menu.
+That detail was implemented for spec correctness with no visible payoff; on this surface it becomes
+the thing a judge sees first.
+
+**Not verified by us.** There is no ChatGPT desktop app available in this environment, so the README
+row for it now reports the platform's documentation and says so explicitly rather than claiming an
+observation. The origin-trial dead end recorded above remains accurate for *Chrome* and is still the
+reason Replay exists.

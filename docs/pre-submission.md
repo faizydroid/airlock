@@ -18,7 +18,9 @@ npm run verify:all
 | Typecheck | `npm run typecheck` | clean |
 | 166 unit, invariant, adversarial and regression tests | `npm test` | passing |
 | No network primitive in the shipped bundle | `npm run verify:egress` | passing |
-| 42 browser checks in real Chrome with WebMCP live | `npm run verify:browser` | passing |
+| 47 browser checks in real Chrome with WebMCP live | `npm run verify:browser` | passing |
+| Accessibility, contrast and the no-WebMCP path | `npm run verify:a11y` | passing |
+| A real model chooses and drives the tools | `npm run agent` | passing |
 | Deployed site serves tokens and the current build | `npm run verify:live` | passing |
 | Nothing secret-shaped in the tracked tree | `npm run verify:secrets` | passing |
 
