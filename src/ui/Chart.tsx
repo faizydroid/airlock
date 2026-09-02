@@ -31,14 +31,14 @@ import type { AggregateOk, Cell } from '../kernel/kernel.js';
 /**
  * Series palette, in assignment order.
  *
- * Black leads because the bars are the record, and because a single-series chart — the common case —
- * should read as ink on paper rather than as a colour choice. Swiss Red takes the second series so
- * that a two-series comparison, which is what a pay-gap chart is, lands as black against red.
- * Everything after that is a grey ramp.
+ * Acid yellow leads, because a single-series chart is the common case and the bars should arrive with
+ * the same energy as the rest of the page. Off-white takes the second series, so a two-series
+ * comparison — which is what a pay-gap chart is — lands as yellow against white. Everything after
+ * that is a zinc ramp descending toward the background.
  *
- * These are the `--data-*` tokens rather than the chrome palette, because six cohorts have to be
- * distinguishable and the style supplies exactly two usable hues. A grey ramp for series encoding is
- * ordinary information design; using those greys anywhere in the interface chrome would not be.
+ * These are `--data-*` tokens rather than the chrome palette, because six cohorts have to be
+ * distinguishable and the style supplies exactly one hue. A neutral ramp for series encoding is
+ * ordinary information design; using those greys anywhere in the chrome would not be.
  */
 const SERIES_TOKENS = [
   '--data-1',
@@ -63,12 +63,12 @@ function label(cell: Cell, dims: string[]): string {
  * case where the stylesheet has not applied, so a missing token can never paint invisible bars.
  */
 const SERIES_FALLBACK: Record<string, string> = {
-  '--data-1': '#000000',
-  '--data-2': '#ff3000',
-  '--data-3': '#6e6e6e',
-  '--data-4': '#ababab',
-  '--data-5': '#d6d6d6',
-  '--data-6': '#ffffff'
+  '--data-1': '#dfe104',
+  '--data-2': '#fafafa',
+  '--data-3': '#a1a1aa',
+  '--data-4': '#71717a',
+  '--data-5': '#52525b',
+  '--data-6': '#3f3f46'
 };
 
 function readTokens() {
@@ -76,8 +76,9 @@ function readTokens() {
   const get = (name: string, fallback: string) => cs.getPropertyValue(name).trim() || fallback;
 
   return {
-    ink: get('--ink', '#000000'),
-    muted: get('--muted', '#f2f2f2'),
+    /** Axes, rules and bar outlines. On a dark field the structural colour is the foreground. */
+    ink: get('--fg', '#fafafa'),
+    muted: get('--muted', '#27272a'),
     series: SERIES_TOKENS.map((t) => get(t, SERIES_FALLBACK[t]!))
   };
 }
@@ -150,7 +151,8 @@ export function Chart({ result }: Props) {
     ctx.font = '700 10px Inter, system-ui, sans-serif';
 
     // Gridlines at hairline weight, so they describe the scale without competing with the bars.
-    ctx.strokeStyle = 'rgba(0,0,0,0.12)';
+    // Light-on-dark now, since the panel behind them is rich black rather than white.
+    ctx.strokeStyle = 'rgba(255,255,255,0.14)';
     ctx.lineWidth = 1;
     const ticks = 4;
     for (let i = 0; i <= ticks; i++) {

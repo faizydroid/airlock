@@ -25,17 +25,19 @@ const root = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(root, 'src', 'ui', 'fonts.css');
 
 /**
- * The variable face across 400..900, latin subset only.
+ * Space Grotesk, the variable face across 300..700, latin subset only.
  *
- * Requesting a range rather than discrete weights returns Inter's variable font: one file that
- * covers Regular through Black, instead of four static faces that would cost roughly 50% more
- * bytes and still leave gaps. The design system uses 400, 500, 700 and 900, so a continuous axis
- * covers it exactly.
+ * Requesting a range rather than discrete weights returns one file covering Light through Bold,
+ * instead of three static faces for the 400 / 500 / 700 the design system uses.
  *
- * latin-ext, greek, cyrillic and vietnamese are dropped: the UI and the generated dataset are
- * English, and those subsets would multiply the payload for glyphs that never render.
+ * Space Grotesk stops at 700 — there is no 900. A `900` request returns the 700 face and leaves the
+ * browser synthesising a faux-bold, which smears the geometry badly at the display sizes this design
+ * is built around. So 700 is the ceiling and scale does the shouting instead.
+ *
+ * latin-ext, vietnamese and the rest are dropped: the UI and the generated dataset are English, and
+ * those subsets would multiply the payload for glyphs that never render.
  */
-const CSS_URL = 'https://fonts.googleapis.com/css2?family=Inter:wght@400..900&display=block';
+const CSS_URL = 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300..700&display=block';
 
 // Google serves woff2 + unicode-range subsets only to browsers it recognises. Without a modern UA
 // it returns legacy truetype, which is several times the size.

@@ -7,6 +7,8 @@ import { BUDGET_CELLS, N_NUMERIC_FLOOR } from '../kernel/policy.js';
 import { Chart, label } from './Chart.js';
 import { Counters } from './Counters.js';
 import { AttackPanel } from './AttackPanel.js';
+import { Marquee, MarqueeItem, MarqueeMark } from './Marquee.js';
+import { REFUSAL_CODES } from '../kernel/policy.js';
 import { startReplay, isReplaying, stopReplay } from '../replay/replay.js';
 import type { LedgerEntry } from '../kernel/kernel.js';
 
@@ -65,6 +67,7 @@ export function App() {
   // computing against a fixed 400 rendered a negative bar after one click.
   const spent = Math.max(0, s.budgetTotal - s.budget.remaining);
   const pending = s.overrides.filter((o) => o.status === 'pending');
+  const refusedCount = s.ledger.filter((e) => e.outcome !== 'ok').length;
 
   const exportReport = () => {
     const md = reportToMarkdown(buildReport(store));
@@ -101,6 +104,34 @@ export function App() {
       </header>
 
       <Counters state={s} />
+
+      {/*
+        The fast band. Every figure here is live state, not a literal — the zero, the aggregate
+        count, the refusal tally and the budget all move as the session runs. A marquee of decorative
+        numbers would be wallpaper; a marquee of the actual telemetry is the argument, scrolling.
+      */}
+      <Marquee
+        duration={30}
+        variant="accent"
+        label={
+          `Live session totals: ${s.recordsDisclosed} individual records disclosed, `
+          + `${s.valuesReleased} aggregate values released, ${refusedCount} queries refused, `
+          + `${allToolDefs.length} tools exposed, ${spent} of ${s.budgetTotal} budget spent.`
+        }
+      >
+        <MarqueeItem figure={s.recordsDisclosed.toLocaleString()}>records disclosed</MarqueeItem>
+        <MarqueeMark />
+        <MarqueeItem figure={s.valuesReleased.toLocaleString()}>aggregates released</MarqueeItem>
+        <MarqueeMark />
+        <MarqueeItem figure={String(refusedCount)}>queries refused</MarqueeItem>
+        <MarqueeMark />
+        <MarqueeItem figure={String(allToolDefs.length)}>tools exposed</MarqueeItem>
+        <MarqueeMark />
+        <MarqueeItem figure={`${spent}/${s.budgetTotal}`}>budget spent</MarqueeItem>
+        <MarqueeMark />
+        <MarqueeItem figure={String(REFUSAL_CODES.length)}>policy codes</MarqueeItem>
+        <MarqueeMark />
+      </Marquee>
 
       {s.replayCaption && (
         <div className="notice" role="status">
@@ -163,7 +194,7 @@ export function App() {
         <div className="col">
           <section className="panel">
             <h2>
-              <span className="num">01</span>
+              <span className="num" aria-hidden="true">01</span>
               What you see
               <span className="tag">
                 aggregates only · nothing individual is rendered
@@ -184,7 +215,7 @@ export function App() {
 
           <section className="panel">
             <h2>
-              <span className="num">02</span>
+              <span className="num" aria-hidden="true">02</span>
               Findings
               <span className="tag">{s.findings.length} recorded</span>
             </h2>
@@ -213,7 +244,7 @@ export function App() {
         <div className="col">
           <section className="panel">
             <h2>
-              <span className="num">03</span>
+              <span className="num" aria-hidden="true">03</span>
               What the agent received
               <span className="tag">verbatim tool return</span>
             </h2>
@@ -231,7 +262,7 @@ export function App() {
           {pending.length > 0 && (
             <section className="panel decide">
               <h2>
-                <span className="num">04</span>
+                <span className="num" aria-hidden="true">04</span>
                 Your decision required
                 <span className="tag">{pending.length} pending</span>
               </h2>
@@ -245,7 +276,7 @@ export function App() {
 
           <section className="panel record">
             <h2>
-              <span className="num">05</span>
+              <span className="num" aria-hidden="true">05</span>
               Disclosure ledger
               <span className="tag">append-only</span>
             </h2>
@@ -262,7 +293,7 @@ export function App() {
 
           <section className="panel">
             <h2>
-              <span className="num">06</span>
+              <span className="num" aria-hidden="true">06</span>
               Tools exposed to the agent
               <span className="tag">
                 {toolNames.length} of {allToolDefs.length} registered
@@ -302,6 +333,23 @@ export function App() {
           and gives the result text a proper measure. It also lands the page's closing argument as
           its own full-bleed section rather than as the last item in a sidebar.
         */}
+        {/*
+          The slow band, and a section divider with something to say. These are every refusal code
+          the policy can emit, sourced from `REFUSAL_CODES` rather than typed out — so a code that
+          gets added appears here for free, and one that gets deleted stops being advertised.
+        */}
+        <Marquee
+          duration={55}
+          label={`Every refusal code this policy can emit: ${REFUSAL_CODES.join(', ')}.`}
+        >
+          {REFUSAL_CODES.map((code) => (
+            <MarqueeItem key={code}>
+              {code}
+              <MarqueeMark />
+            </MarqueeItem>
+          ))}
+        </Marquee>
+
         <div className="span-both" id="attack">
           <AttackPanel loaded={s.loaded} />
         </div>
@@ -397,7 +445,7 @@ function CellTable({ result }: { result: NonNullable<ReturnType<typeof store.sna
           <tr>
             <th>cohort</th>
             <th>headcount</th>
-            <th className="num">
+            <th className="num" aria-hidden="true">
               {result.stat}
               {result.metric ? ` · ${result.metric}` : ''}
             </th>
@@ -411,7 +459,7 @@ function CellTable({ result }: { result: NonNullable<ReturnType<typeof store.sna
               {c.value === undefined ? (
                 <td className="num withheld">withheld</td>
               ) : (
-                <td className="num">{formatValue(c.value, result.metric)}</td>
+                <td className="num" aria-hidden="true">{formatValue(c.value, result.metric)}</td>
               )}
             </tr>
           ))}

@@ -184,7 +184,7 @@ if (mirroredHeaders['Content-Security-Policy']) {
   // fallback to Arial would be easy to miss in a screenshot.
   const fontLoaded = await page.evaluate(async () => {
     await document.fonts.ready;
-    return document.fonts.check('700 14px Inter');
+    return document.fonts.check('700 14px "Space Grotesk"');
   });
   check('the inlined font still loads under CSP', fontLoaded);
 } else {

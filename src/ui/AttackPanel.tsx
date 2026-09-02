@@ -73,7 +73,7 @@ export function AttackPanel({ loaded }: { loaded: boolean }) {
   return (
     <section className="panel probe">
       <h2>
-        <span className="num">07</span>
+        <span className="num" aria-hidden="true">07</span>
         Try to break it
         <span className="tag">
           {fired === 0

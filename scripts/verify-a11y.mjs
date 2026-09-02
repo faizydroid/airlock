@@ -196,17 +196,34 @@ console.log('\n=== Accessibility structure ===\n');
     };
     const out = [];
     const targets = [
-      ['.attack-result .attack-test', 'test citation (small red)'],
+      ['.attack-result .attack-test', 'test citation'],
       ['.row .verdict', 'ledger verdict chip'],
       ['.attack-result .verdict', 'attack verdict block'],
-      ['section.panel > h2 .num', 'section number (red)'],
+      ['section.panel > h2 .num', 'section numeral'],
       ['.sev', 'severity badge'],
       ['table.cells td.withheld', 'withheld cell'],
-      ['.provenance', 'provenance label']
+      ['.provenance', 'provenance label'],
+      ['.marquee-item', 'marquee label'],
+      ['.card p', 'finding body copy'],
+      ['.empty', 'empty state']
     ];
     for (const [sel, label] of targets) {
       const el = document.querySelector(sel);
       if (!el) { out.push({ label, ratio: null }); continue; }
+
+      /**
+       * Genuinely decorative content is exempt, and only genuinely decorative content.
+       *
+       * The oversized section numerals are muted-on-background by design — the design system calls
+       * for massive numbers in muted tones as depth layers, explicitly as graphic shapes rather than
+       * as text. They measure about 1.3:1, which would be a real failure if they carried meaning.
+       * They do not: each sits beside the section title that actually names it, and each is marked
+       * `aria-hidden`, so no user is relying on reading them.
+       *
+       * Keyed on `aria-hidden` rather than on the selector, so this cannot quietly excuse an element
+       * that later starts carrying meaning. Anything the accessibility tree can see is measured.
+       */
+      if (el.closest('[aria-hidden="true"]')) { out.push({ label, ratio: null, decorative: true }); continue; }
       const cs = getComputedStyle(el);
       const size = parseFloat(cs.fontSize);
       const bold = Number(cs.fontWeight) >= 700;
@@ -217,6 +234,7 @@ console.log('\n=== Accessibility structure ===\n');
   });
 
   for (const c of contrast) {
+    if (c.decorative) { console.log(`      (decorative, aria-hidden) ${c.label}`); continue; }
     if (c.ratio === null) { console.log(`      (absent) ${c.label}`); continue; }
     check(
       `contrast ${c.label}`,
@@ -225,15 +243,59 @@ console.log('\n=== Accessibility structure ===\n');
     );
   }
 
-  // Disabled button, which is where an invisible label bit once already.
+  /**
+   * The disabled button, which is where an invisible label bit once already: `.primary` set white
+   * text, a later rule changed only the background, and the result was 1.06:1.
+   *
+   * Measured rather than compared against a literal colour. An earlier version of this check asserted
+   * `color === 'rgb(0, 0, 0)'`, which was true of one theme and meaningless in general — on a dark
+   * field black text is the bug, not the fix. This also folds in `opacity`, because the design system
+   * uses opacity for the disabled state and a naive contrast reading would miss the fade entirely.
+   */
   await page.locator('.toolbar button').first().waitFor();
   const dis = await page.evaluate(() => {
     const b = [...document.querySelectorAll('button')].find((x) => x.disabled);
     if (!b) return null;
+
+    const lum = (rgb) => {
+      const [r, g, bl] = rgb.map((v) => {
+        const s = v / 255;
+        return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+      });
+      return 0.2126 * r + 0.7152 * g + 0.0722 * bl;
+    };
+    const parse = (c) => (c.match(/\d+/g) ?? []).slice(0, 3).map(Number);
+    const solidBgOf = (el) => {
+      let n = el;
+      while (n) {
+        const bg = getComputedStyle(n).backgroundColor;
+        if (!/rgba\(0,\s*0,\s*0,\s*0\)/.test(bg)) {
+          const p = parse(bg);
+          if (p.length === 3) return p;
+        }
+        n = n.parentElement;
+      }
+      return [0, 0, 0];
+    };
+
     const cs = getComputedStyle(b);
-    return { color: cs.color, text: b.innerText.trim().slice(0, 30) };
+    const alpha = Number(cs.opacity);
+    const bg = solidBgOf(b);
+    // Composite the text over its backdrop at the element's opacity, which is what the eye receives.
+    const fg = parse(cs.color).map((v, i) => v * alpha + bg[i] * (1 - alpha));
+    const [hi, lo] = [lum(fg), lum(bg)].sort((x, y) => y - x);
+
+    return {
+      ratio: Math.round(((hi + 0.05) / (lo + 0.05)) * 100) / 100,
+      opacity: alpha,
+      text: b.innerText.trim().slice(0, 34)
+    };
   });
-  check('disabled button keeps a visible label', dis === null || dis.color === 'rgb(0, 0, 0)', dis ? `${dis.color} "${dis.text}"` : 'none disabled');
+  check(
+    'disabled button keeps a legible label',
+    dis === null || dis.ratio >= 4.5,
+    dis ? `${dis.ratio}:1 at opacity ${dis.opacity} — "${dis.text}"` : 'none disabled'
+  );
 
   await page.close();
 }

@@ -41,8 +41,9 @@ currently tells a viewer which side is the agent and which is the page.
 
 Screen: Airlock with the dataset already loaded and a chart visible, agent panel on the right,
 clearly labelled. In the agent panel, ask for the highest salary in the company. A row lands in the
-ledger carrying a **red rule in its left margin** and **REFUSED** in black, followed by the policy
-code that caused it. The counter still reads **0**.
+ledger carrying an **acid-yellow bar in its left margin** and **REFUSED** in a solid yellow chip,
+followed by the policy code that caused it. The counter still reads **0**, in yellow, at the top of
+the page.
 
 > "That's an AI agent asking for the highest salary in a company's payroll. And that's the web
 > page telling it no."
@@ -52,8 +53,10 @@ readable, because the code is what makes it a rule rather than a mood.
 
 ### 0:15 – 0:35 · The problem, and the counterfactual
 
-Screen: the two counter blocks, side by side. This is the strongest single frame in the app — do
-not narrate over a static shot, cut straight to it.
+Screen: the two counter blocks, side by side — an itemised bill of what uploading would have cost,
+against a single acid-yellow zero at viewport scale. This is the strongest single frame in the app —
+do not narrate over a static shot, cut straight to it. The live-telemetry marquee runs directly
+beneath it; let it scroll through at least one full cell before cutting away.
 
 > "Five thousand employees. Uploading that file means sending about two hundred and twenty-five
 > thousand tokens — it doesn't even fit in most context windows, and nobody is putting their
@@ -128,8 +131,8 @@ outscores thirty seconds of chart tour.
 ### 2:10 – 2:25 · Hand the attacks to the viewer
 
 Screen: the **Try to break it** panel — section 07, full width at the foot of the page, laid out as
-a two-column grid of cases. Click **Run all**, let the verdicts land. Refusals settle to grey with a
-red margin rule and a black **REFUSED** block; withheld results are hatched.
+a two-column grid of cases. Click **Run all**, let the verdicts land. Refusals settle to a muted field
+with a yellow margin rule and a solid yellow **REFUSED** block; withheld results are hatched grey.
 
 > "You don't have to take my word for any of this. These are the same attacks the test suite runs,
 > so every outcome you see here is one a test asserts — including two that succeeded against an

@@ -34,8 +34,10 @@ export function Counters({ state }: { state: AppState }) {
             <span>
               <b>{thousands(upload.rows)}</b> people
             </span>
+            {/* This figure was the only one without a unit caption, which read as an unfinished
+                cell once the numerals became display-scale and stacked. */}
             <span>
-              <b>{bytes(upload.bytes)}</b>
+              <b>{bytes(upload.bytes)}</b> of JSON
             </span>
             {/* The tilde belongs inside the numeral, not beside it. At label size next to a 27px
                 figure it read as a floating minus sign, which is a bad thing to imply about a

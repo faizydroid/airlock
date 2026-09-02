@@ -219,6 +219,15 @@ export interface Refusal {
   recovery: string;
 }
 
+/**
+ * Every refusal code the policy can emit.
+ *
+ * Derived from `REFUSAL_TEXT` rather than written out again, so the list cannot drift from the codes
+ * that actually exist. The UI scrolls these as a marquee: a code that gets added appears there for
+ * free, and one that gets deleted disappears from the page instead of becoming a lie on a poster.
+ */
+export const REFUSAL_CODES = Object.keys(REFUSAL_TEXT) as RefusalCode[];
+
 export function refuse(code: RefusalCode): Refusal {
   const t = REFUSAL_TEXT[code];
   return { status: 'refused', code, reason: t.reason, recovery: t.recovery };
