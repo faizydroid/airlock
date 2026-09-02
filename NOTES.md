@@ -385,3 +385,33 @@ the thing a judge sees first.
 row for it now reports the platform's documentation and says so explicitly rather than claiming an
 observation. The origin-trial dead end recorded above remains accurate for *Chrome* and is still the
 reason Replay exists.
+
+### E16a — confirmed working in ChatGPT desktop (2026-09-02)
+
+Observed directly, on the live origin, with **no flag, no extension and no origin trial**. Model
+selector read **5.6 Terra High**.
+
+The Site tools panel reported:
+
+```
+Available site tools (2)
+1 read, 1 write tool
+  load_sample_dataset
+  describe_dataset
+```
+
+Three things this settles:
+
+1. **The origin-trial dead end never mattered for this surface.** Everything recorded above about
+   tokens being rejected applies to Chrome. ChatGPT's built-in browser needs none of it, exactly as
+   the help article says.
+2. **State-gated registration is visible to the real client.** Two tools before a dataset exists is
+   what `syncRegistration()` is built to do and what the browser checks assert; ChatGPT reports the
+   same number independently.
+3. **`readOnlyHint` is load-bearing after all.** "1 read, 1 write tool" is ChatGPT reading the
+   annotations on `describe_dataset` and `load_sample_dataset`. That field was set for spec
+   correctness with no expected visible effect, and it turns out to drive how the client describes the
+   page's capabilities to a user before any tool runs.
+
+Still to confirm on this surface: that ChatGPT *invokes* the tools and that refusals surface to the
+user with their policy codes. Discovery is proven; execution is not yet.

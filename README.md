@@ -305,7 +305,7 @@ Stated plainly, including what does not work.
 | **A real model driving the tools** | **Verified.** `claude-haiku-4-5` via Amazon Bedrock chose 7 of 8 tools unprompted from their descriptions alone, ran a full audit in 16 calls, and received zero individual records. Reproduce with `npm run agent`; transcript in [`artifacts/agent-session.md`](artifacts/agent-session.md). |
 | Chrome 149+ with `chrome://flags/#enable-webmcp-testing` | Same path as above; the flag is the manual equivalent of the launch switch. |
 | Chrome without the flag, origin-trial token served | **Does not work.** See below. |
-| ChatGPT desktop built-in browser | **Should work; not verified by us.** OpenAI shipped WebMCP there as [site tools](https://help.openai.com/en/articles/20001423-using-site-tools-in-the-chatgpt-desktop-app) on 27 August 2026 — no flag, no extension, no origin trial, and explicitly *not* in Chrome. Availability depends on the account and the selected model. We have no access to test it, so this row states the platform's documentation rather than our own observation. |
+| **ChatGPT desktop built-in browser** | **Verified.** Discovered on the live origin as [site tools](https://help.openai.com/en/articles/20001423-using-site-tools-in-the-chatgpt-desktop-app) with **no flag, no extension and no origin trial**, on GPT-5.6 Terra. The panel reads *"Available site tools (2) — 1 read, 1 write tool"* before a dataset exists: that count is the state gating working, and the read/write split is ChatGPT surfacing this build's `readOnlyHint` annotations. |
 | Any browser, no WebMCP | **The UI and Replay work.** The full audit narrative is one click away, and this path is checked by `npm run verify:a11y`. |
 
 ### Automated browser verification
