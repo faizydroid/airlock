@@ -40,10 +40,24 @@ currently tells a viewer which side is the agent and which is the page.
 ### 0:00 – 0:15 · Cold open, the refusal
 
 Screen: Airlock with the dataset already loaded and a chart visible, agent panel on the right,
-clearly labelled. In the agent panel, ask for the highest salary in the company. A row lands in the
-ledger carrying an **acid-yellow bar in its left margin** and **REFUSED** in a solid yellow chip,
-followed by the policy code that caused it. The counter still reads **0**, in yellow, at the top of
+clearly labelled. Ask the agent to break salary down by **level, office and gender together**. A row
+lands in the ledger carrying an **acid-yellow bar in its left margin** and **REFUSED** in a solid
+yellow chip, followed by `GROUP_BY_TOO_DEEP`. The counter still reads **0**, in yellow, at the top of
 the page.
+
+> **Use the three-dimension request, not "what is the highest salary".** This matters and it is not
+> obvious. `summarize_metric`'s `stat` parameter is an enum containing only `mean`, so a compliant
+> model reads the schema, understands that extremes are unavailable, and explains that it cannot ask
+> — without ever calling the tool. No refusal reaches the ledger and the cold open has nothing to
+> show. Verified against a live model: `artifacts/agent-session.md` records exactly that outcome, with
+> zero refusals logged across sixteen tool calls.
+>
+> `groupBy` is different. It is an array with no `maxItems`, so a three-dimension request is
+> *representable* — the model can and will send it, and the kernel refuses it at depth. That is the
+> one forbidden call an agent reliably makes on camera.
+>
+> Keep the highest-salary question for 1:35, where it belongs: as the point that the tool surface
+> makes some questions unaskable rather than merely refused.
 
 > "That's an AI agent asking for the highest salary in a company's payroll. And that's the web
 > page telling it no."
