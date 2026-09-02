@@ -54,9 +54,10 @@ previously impossible rather than merely inconvenient.
 
 Three ways.
 
-**It makes a refusal legible.** When the agent asks for something it shouldn't have, the person at
-the keyboard sees a red row in an append-only ledger with the reason attached. Most agent
-interfaces make denial feel like a malfunction. Here it is the product working.
+**It makes a refusal legible.** When the agent asks for something it shouldn't have, the row lands in
+an append-only ledger marked in acid yellow, carrying the policy code that caused it and the reason
+attached. Most agent interfaces make denial feel like a malfunction. Here it is the product working,
+and it is the loudest thing on the page.
 
 **It shows both sides of the boundary at once.** The left panel is what you see: aggregate charts.
 The right panel is what the agent received: the verbatim tool return. You can compare them
